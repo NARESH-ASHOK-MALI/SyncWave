@@ -11,6 +11,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Description>SyncWave — One Sound. Many Devices. Multi-device audio sync.</Description>
     <Version>1.0.0</Version>
+    <ApplicationIcon>Assets\logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
