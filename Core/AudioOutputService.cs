@@ -91,7 +91,22 @@ namespace SyncWave.Core
         }
 
         /// <summary>
+        /// Determines the optimal latency for a device based on its connection type.
+        /// Bluetooth devices need higher latency to avoid underruns.
+        /// </summary>
+        private static int GetDesiredLatency(string deviceType)
+        {
+            return deviceType.ToLowerInvariant() switch
+            {
+                "bluetooth" => 80,  // BT needs more buffer headroom
+                "hdmi" => 50,       // HDMI is moderate latency
+                _ => 30             // Wired/USB can handle very low latency
+            };
+        }
+
+        /// <summary>
         /// Initializes and starts output on the given device.
+        /// Uses event-driven WASAPI with adaptive latency based on device type.
         /// </summary>
         public void AddDevice(AudioDeviceModel device)
         {
@@ -128,10 +143,10 @@ namespace SyncWave.Core
 
                     var stream = new DeviceStream(device.DeviceId);
 
-                    // Create buffered provider with generous buffer size (5 seconds)
+                    // Create buffered provider (2 seconds — reduced from 5s, still generous)
                     stream.Buffer = new BufferedWaveProvider(_sourceFormat)
                     {
-                        BufferLength = _sourceFormat.AverageBytesPerSecond * 5,
+                        BufferLength = _sourceFormat.AverageBytesPerSecond * 2,
                         DiscardOnBufferOverflow = true
                     };
 
@@ -144,19 +159,24 @@ namespace SyncWave.Core
                     float initVol = _deviceVolumes.GetValueOrDefault(device.DeviceId, 1.0f);
                     stream.VolumeProvider.Volume = initVol;
 
-                    // Timer mode — 100ms balances low latency vs buffer stability
-                    const int desiredLatencyMs = 100;
-                    stream.Player = new WasapiOut(mmDevice, AudioClientShareMode.Shared, false, desiredLatencyMs);
+                    // Adaptive latency based on device type
+                    int desiredLatencyMs = GetDesiredLatency(device.DeviceType);
+
+                    // Event-driven mode (useEventSync: true) — lower jitter than timer mode
+                    // Falls back to shared mode for compatibility
+                    stream.Player = new WasapiOut(mmDevice, AudioClientShareMode.Shared, true, desiredLatencyMs);
                     stream.Player.PlaybackStopped += (s, e) => OnPlaybackStopped(device.DeviceId, device.FriendlyName, e);
                     stream.Player.Init(stream.VolumeProvider);
 
-                    // Pre-fill with 100ms of silence to prevent underruns
-                    int prefillBytes = _sourceFormat.AverageBytesPerSecond / 10; // 100ms
+                    // Pre-fill with silence matching the desired latency to prevent underruns
+                    int prefillBytes = _sourceFormat.AverageBytesPerSecond * desiredLatencyMs / 1000;
                     prefillBytes = (prefillBytes / _sourceFormat.BlockAlign) * _sourceFormat.BlockAlign;
                     var silence = new byte[prefillBytes];
                     stream.Buffer.AddSamples(silence, 0, silence.Length);
 
-                    Logger.Info($"WasapiOut initialized for {device.FriendlyName}, output format: {stream.Player.OutputWaveFormat}");
+                    Logger.Info($"WasapiOut initialized for {device.FriendlyName}, " +
+                                $"mode: event-driven, latency: {desiredLatencyMs}ms, " +
+                                $"output format: {stream.Player.OutputWaveFormat}");
 
                     if (_isPlaying)
                     {
@@ -168,7 +188,6 @@ namespace SyncWave.Core
                     _streams[device.DeviceId] = stream;
 
                     // Use the desired latency as the measured latency estimate
-                    // (AudioClient.StreamLatency requires initialization that WasapiOut owns internally)
                     device.MeasuredLatency = desiredLatencyMs;
                     _latencyManager.SetDeviceLatency(device.DeviceId, desiredLatencyMs);
 
@@ -269,7 +288,7 @@ namespace SyncWave.Core
         }
 
         /// <summary>
-        /// Sets the volume for a specific device (0.0 to 1.0).
+        /// Sets the volume for a specific device (0.0 to 2.0).
         /// </summary>
         public void SetDeviceVolume(string deviceId, float volume)
         {
@@ -310,21 +329,6 @@ namespace SyncWave.Core
                 {
                     Logger.Warn($"Buffer write error for {kvp.Key}: {ex.Message}");
                 }
-            }
-        }
-
-        /// <summary>
-        /// Applies volume scaling to IEEE float32 audio samples in-place.
-        /// </summary>
-        private static void ApplyVolume(byte[] buffer, int length, float volume)
-        {
-            int sampleCount = length / 4;
-            for (int i = 0; i < sampleCount; i++)
-            {
-                int offset = i * 4;
-                float sample = BitConverter.ToSingle(buffer, offset);
-                sample *= volume;
-                BitConverter.TryWriteBytes(buffer.AsSpan(offset, 4), sample);
             }
         }
 

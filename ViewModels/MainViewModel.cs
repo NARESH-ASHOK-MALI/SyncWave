@@ -39,6 +39,9 @@ namespace SyncWave.ViewModels
         private string _errorMessage = string.Empty;
         private double _audioLevel;
 
+        // ── Saved profiles (loaded once at startup) ───────────────
+        private Dictionary<string, DeviceProfile> _savedProfiles = new();
+
         // ── Waveform ──────────────────────────────────────────────
         private double[] _waveformData = new double[200];
         private int _waveformWritePos;
@@ -144,9 +147,11 @@ namespace SyncWave.ViewModels
             _monitorTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
             _monitorTimer.Tick += (_, _) => UpdateMonitoring();
 
+            // Load saved profiles before device enumeration
+            _savedProfiles = DeviceProfileManager.Load();
+
             // Initial device enumeration
             RefreshDevices();
-            LoadProfiles();
 
             _deviceRefreshTimer.Start();
 
@@ -154,6 +159,28 @@ namespace SyncWave.ViewModels
         }
 
         // ── Methods ───────────────────────────────────────────────
+
+        /// <summary>
+        /// Reads the Windows system volume for a specific device (0–100%).
+        /// Returns null if the volume cannot be read.
+        /// </summary>
+        private static double? ReadSystemVolume(MMDevice mmDevice)
+        {
+            try
+            {
+                var volume = mmDevice.AudioEndpointVolume;
+                if (volume != null)
+                {
+                    // MasterVolumeLevelScalar is 0.0–1.0, convert to 0–100
+                    return Math.Round(volume.MasterVolumeLevelScalar * 100, 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Could not read system volume for {mmDevice.FriendlyName}: {ex.Message}");
+            }
+            return null;
+        }
 
         /// <summary>
         /// Enumerates all active audio render (output) devices.
@@ -204,11 +231,20 @@ namespace SyncWave.ViewModels
                             IsDefaultDevice = isDefault
                         };
 
-                        // Restore previous selection if re-appearing
-                        if (existingSelections.TryGetValue(ep.ID, out var delay))
+                        // Volume initialization priority (updated per user request):
+                        // 1. Windows system volume (Always synced on launch)
+                        // 2. Saved profile volume (Fallback only)
+                        var sysVol = ReadSystemVolume(ep);
+
+                        if (_savedProfiles.TryGetValue(ep.ID, out var profile))
                         {
                             model.IsSelected = true;
-                            model.ManualDelay = delay;
+                            model.ManualDelay = profile.Delay;
+                            model.Volume = sysVol ?? profile.Volume;
+                        }
+                        else if (sysVol.HasValue)
+                        {
+                            model.Volume = sysVol.Value;
                         }
 
                         // Subscribe to property changes for delay slider and checkbox
@@ -411,7 +447,7 @@ namespace SyncWave.ViewModels
                 AudioLevel = 0;
                 ErrorMessage = string.Empty;
 
-                // Save current profiles
+                // Save current profiles (volume + delay)
                 SaveProfiles();
 
                 // Reset waveform
@@ -589,38 +625,18 @@ namespace SyncWave.ViewModels
         }
 
         /// <summary>
-        /// Loads saved device delay profiles.
-        /// </summary>
-        private void LoadProfiles()
-        {
-            try
-            {
-                var profiles = DeviceProfileManager.Load();
-                foreach (var device in Devices)
-                {
-                    if (profiles.TryGetValue(device.DeviceId, out var delay))
-                    {
-                        device.ManualDelay = delay;
-                        device.IsSelected = true;
-                    }
-                }
-                Logger.Info($"Profiles loaded for {profiles.Count} device(s).");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Failed to load profiles", ex);
-            }
-        }
-
-        /// <summary>
-        /// Saves current device delay profiles.
+        /// Saves current device profiles (volume + delay).
         /// </summary>
         private void SaveProfiles()
         {
             try
             {
                 var profiles = Devices.Where(d => d.IsSelected)
-                    .ToDictionary(d => d.DeviceId, d => d.ManualDelay);
+                    .ToDictionary(d => d.DeviceId, d => new DeviceProfile
+                    {
+                        Delay = d.ManualDelay,
+                        Volume = d.Volume
+                    });
                 DeviceProfileManager.Save(profiles);
             }
             catch (Exception ex)

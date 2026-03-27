@@ -7,6 +7,9 @@ namespace SyncWave.Core
     /// Wraps a WaveProvider and applies volume scaling at read-time.
     /// Volume changes take effect INSTANTLY because scaling happens
     /// when WasapiOut pulls data, not when data is written to the buffer.
+    /// 
+    /// Uses perceptual (squared) volume curve and tanh soft-clipping
+    /// for natural loudness control and distortion-free boosting.
     /// </summary>
     public class VolumeWaveProvider : IWaveProvider
     {
@@ -17,6 +20,7 @@ namespace SyncWave.Core
 
         /// <summary>
         /// Volume level from 0.0 (mute) to 2.0 (200% boost). Thread-safe.
+        /// A perceptual curve is applied internally so the slider feels linear to humans.
         /// Changes take effect on the very next audio read.
         /// </summary>
         public float Volume
@@ -38,16 +42,27 @@ namespace SyncWave.Core
             if ((vol >= 0.999f && vol <= 1.001f) || bytesRead == 0)
                 return bytesRead;
 
-            // Scale IEEE float32 samples in-place with soft clipping
+            // Apply perceptual (squared) volume curve:
+            // slider at 50% → effective gain ~25% → sounds like half volume
+            // This makes different devices much easier to volume-match
+            float effectiveVol = vol * vol;
+
+            // Scale IEEE float32 samples in-place with tanh soft clipping
             int sampleCount = bytesRead / 4;
             for (int i = 0; i < sampleCount; i++)
             {
                 int pos = offset + i * 4;
                 float sample = BitConverter.ToSingle(buffer, pos);
-                sample *= vol;
-                // Soft clip to prevent harsh distortion when boosting
-                if (sample > 1.0f) sample = 1.0f;
-                else if (sample < -1.0f) sample = -1.0f;
+                sample *= effectiveVol;
+
+                // Tanh soft clipping — smoothly saturates instead of hard chopping.
+                // Only apply when sample exceeds ±0.95 to avoid unnecessary math
+                // on normal-level signals (tanh is identity-like near zero).
+                if (sample > 0.95f || sample < -0.95f)
+                {
+                    sample = MathF.Tanh(sample);
+                }
+
                 BitConverter.TryWriteBytes(buffer.AsSpan(pos, 4), sample);
             }
 
