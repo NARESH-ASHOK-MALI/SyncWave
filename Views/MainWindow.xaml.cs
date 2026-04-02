@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Shapes;
@@ -10,22 +11,17 @@ using SyncWave.ViewModels;
 namespace SyncWave.Views
 {
     /// <summary>
-    /// Minimal code-behind — handles waveform canvas rendering
-    /// which requires direct access to UIElement tree.
+    /// Minimal code-behind — handles waveform canvas rendering + custom title bar.
     /// </summary>
     public partial class MainWindow : Window
     {
         private readonly DispatcherTimer _waveformTimer;
         private MainViewModel? _vm;
 
-        // Cached brushes for performance (avoid creating per-frame)
-        private static readonly Brush CenterLineBrush = new SolidColorBrush(Color.FromArgb(30, 0, 229, 255));
-        private static readonly Brush WaveformBrush = new LinearGradientBrush(
-            Color.FromRgb(0, 229, 255),
-            Color.FromRgb(124, 77, 255), 0);
-        private static readonly Brush GlowBrush = new LinearGradientBrush(
-            Color.FromRgb(0, 229, 255),
-            Color.FromRgb(124, 77, 255), 0);
+        // Cached brushes — muted monochrome palette for OLED theme
+        private static readonly Brush CenterLineBrush = new SolidColorBrush(Color.FromArgb(20, 180, 180, 180));
+        private static readonly Brush WaveformBrush = new SolidColorBrush(Color.FromRgb(0xA0, 0xA0, 0xA0));
+        private static readonly Brush GlowBrush = new SolidColorBrush(Color.FromRgb(0x80, 0x80, 0x80));
 
         static MainWindow()
         {
@@ -55,8 +51,41 @@ namespace SyncWave.Views
             };
         }
 
+        // ── Custom Title Bar Handlers ─────────────────────────────
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+            {
+                // Double-click toggles maximize
+                ToggleMaximize();
+            }
+            else
+            {
+                DragMove();
+            }
+        }
+
+        private void MinimizeBtn_Click(object sender, RoutedEventArgs e)
+            => WindowState = WindowState.Minimized;
+
+        private void MaximizeBtn_Click(object sender, RoutedEventArgs e)
+            => ToggleMaximize();
+
+        private void CloseBtn_Click(object sender, RoutedEventArgs e)
+            => Close();
+
+        private void ToggleMaximize()
+        {
+            WindowState = WindowState == WindowState.Maximized
+                ? WindowState.Normal
+                : WindowState.Maximized;
+        }
+
+        // ── Waveform Rendering ────────────────────────────────────
+
         /// <summary>
-        /// Renders the waveform as a smooth polyline on the canvas with glow/bloom effect.
+        /// Renders the waveform as a smooth polyline on the canvas.
         /// </summary>
         private void RenderWaveform(object? sender, EventArgs e)
         {
@@ -95,35 +124,25 @@ namespace SyncWave.Views
                 points.Add(new Point(x, y));
             }
 
-            // Draw outer glow (wide, blurred, low opacity)
+            // Draw subtle glow (wide, blurred, very low opacity)
             var outerGlow = new Polyline
             {
-                StrokeThickness = 8,
+                StrokeThickness = 6,
                 StrokeLineJoin = PenLineJoin.Round,
-                Opacity = 0.12,
+                Opacity = 0.08,
                 Stroke = GlowBrush,
                 Points = points,
-                Effect = new BlurEffect { Radius = 8 }
+                Effect = new BlurEffect { Radius = 6 }
             };
             canvas.Children.Add(outerGlow);
 
-            // Draw inner glow (medium width, semi-transparent)
-            var innerGlow = new Polyline
-            {
-                StrokeThickness = 4,
-                StrokeLineJoin = PenLineJoin.Round,
-                Opacity = 0.3,
-                Stroke = GlowBrush,
-                Points = points
-            };
-            canvas.Children.Add(innerGlow);
-
-            // Draw main waveform polyline (sharp, on top)
+            // Draw main waveform polyline
             var polyline = new Polyline
             {
-                StrokeThickness = 1.8,
+                StrokeThickness = 1.5,
                 StrokeLineJoin = PenLineJoin.Round,
                 Stroke = WaveformBrush,
+                Opacity = 0.7,
                 Points = points
             };
             canvas.Children.Add(polyline);
@@ -136,3 +155,4 @@ namespace SyncWave.Views
         }
     }
 }
+

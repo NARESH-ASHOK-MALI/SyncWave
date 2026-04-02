@@ -134,13 +134,13 @@ namespace SyncWave.ViewModels
             StopSyncCommand = new RelayCommand(
                 _ => StopSync(),
                 _ => IsSyncing);
-            RefreshDevicesCommand = new RelayCommand(_ => RefreshDevices());
+            RefreshDevicesCommand = new RelayCommand(_ => RefreshDevices(syncVolume: true));
 
             // Device refresh timer (every 5 seconds)
             _deviceRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
             _deviceRefreshTimer.Tick += (_, _) =>
             {
-                if (!IsSyncing) RefreshDevices();
+                if (!IsSyncing) RefreshDevices(syncVolume: false);
             };
 
             // Monitoring timer (every 250ms for smooth UI updates)
@@ -151,7 +151,7 @@ namespace SyncWave.ViewModels
             _savedProfiles = DeviceProfileManager.Load();
 
             // Initial device enumeration
-            RefreshDevices();
+            RefreshDevices(syncVolume: true);
 
             _deviceRefreshTimer.Start();
 
@@ -185,7 +185,7 @@ namespace SyncWave.ViewModels
         /// <summary>
         /// Enumerates all active audio render (output) devices.
         /// </summary>
-        private void RefreshDevices()
+        private void RefreshDevices(bool syncVolume = false)
         {
             try
             {
@@ -253,7 +253,7 @@ namespace SyncWave.ViewModels
                     }
                 }
 
-                // Update default device flag on existing devices
+                // Update default device flag and sync system volume for existing devices
                 foreach (var d in Devices)
                 {
                     bool isDefault = d.DeviceId == defaultDeviceId;
@@ -261,6 +261,24 @@ namespace SyncWave.ViewModels
                     {
                         d.IsDefaultDevice = isDefault;
                         d.DeviceType = isDefault ? "🔈 Source" : DetectDeviceType(enumerator.GetDevice(d.DeviceId));
+                    }
+
+                    // Sync volume from Windows system only on manual refresh
+                    if (syncVolume)
+                    {
+                        try
+                        {
+                            var mmDevice = enumerator.GetDevice(d.DeviceId);
+                            var sysVol = ReadSystemVolume(mmDevice);
+                            if (sysVol.HasValue)
+                            {
+                                d.Volume = sysVol.Value;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Warn($"Could not sync volume for {d.FriendlyName}: {ex.Message}");
+                        }
                     }
                 }
 
@@ -649,10 +667,10 @@ namespace SyncWave.ViewModels
         {
             StatusBrush = PlaybackStatus switch
             {
-                "Syncing" => new SolidColorBrush(Color.FromRgb(0x00, 0xE6, 0x76)),
-                "Error" => new SolidColorBrush(Color.FromRgb(0xFF, 0x52, 0x52)),
-                "Starting..." => new SolidColorBrush(Color.FromRgb(0xFF, 0xD7, 0x40)),
-                _ => new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88))
+                "Syncing" => new SolidColorBrush(Color.FromRgb(0x5A, 0x9A, 0x5A)),
+                "Error" => new SolidColorBrush(Color.FromRgb(0xB0, 0x50, 0x50)),
+                "Starting..." => new SolidColorBrush(Color.FromRgb(0xA0, 0x80, 0x40)),
+                _ => new SolidColorBrush(Color.FromRgb(0x70, 0x70, 0x70))
             };
         }
 

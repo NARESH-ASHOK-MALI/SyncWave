@@ -60,6 +60,7 @@ namespace SyncWave.Core
         private readonly ConcurrentDictionary<string, DeviceStream> _streams = new();
         private readonly LatencyManager _latencyManager;
         private readonly ConcurrentDictionary<string, float> _deviceVolumes = new();
+        private readonly ConcurrentDictionary<string, float> _originalSystemVolumes = new();
         private WaveFormat? _sourceFormat;
         private bool _isPlaying;
         private readonly object _lock = new();
@@ -191,6 +192,23 @@ namespace SyncWave.Core
                     device.MeasuredLatency = desiredLatencyMs;
                     _latencyManager.SetDeviceLatency(device.DeviceId, desiredLatencyMs);
 
+                    // Set system volume to 100% so SyncWave's slider has full control
+                    try
+                    {
+                        var vol = mmDevice.AudioEndpointVolume;
+                        if (vol != null)
+                        {
+                            // Save original system volume for restoration
+                            _originalSystemVolumes.TryAdd(device.DeviceId, vol.MasterVolumeLevelScalar);
+                            vol.MasterVolumeLevelScalar = 1.0f; // 100%
+                            Logger.Info($"Set system volume to 100% for {device.FriendlyName} (was {_originalSystemVolumes[device.DeviceId] * 100:F0}%)");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Could not set system volume for {device.FriendlyName}: {ex.Message}");
+                    }
+
                     device.IsActive = true;
                     device.HasError = false;
                     device.StatusText = _isPlaying ? "Streaming" : "Ready";
@@ -282,6 +300,9 @@ namespace SyncWave.Core
                 _streams.Clear();
                 _disconnectedDevices.Clear();
                 _latencyManager.ClearAll();
+
+                // Restore original system volumes
+                RestoreSystemVolumes();
 
                 Logger.Info("All output streams stopped and cleaned up.");
             }
@@ -431,6 +452,31 @@ namespace SyncWave.Core
                 }
             }
             Logger.Info("Reconnection monitor stopped.");
+        }
+
+        /// <summary>
+        /// Restores original Windows system volume levels for all devices.
+        /// </summary>
+        private void RestoreSystemVolumes()
+        {
+            foreach (var kvp in _originalSystemVolumes)
+            {
+                try
+                {
+                    var enumerator = new MMDeviceEnumerator();
+                    var mmDevice = enumerator.GetDevice(kvp.Key);
+                    if (mmDevice.State == DeviceState.Active)
+                    {
+                        mmDevice.AudioEndpointVolume.MasterVolumeLevelScalar = kvp.Value;
+                        Logger.Info($"Restored system volume to {kvp.Value * 100:F0}% for {mmDevice.FriendlyName}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn($"Could not restore system volume for {kvp.Key}: {ex.Message}");
+                }
+            }
+            _originalSystemVolumes.Clear();
         }
 
         public void Dispose()

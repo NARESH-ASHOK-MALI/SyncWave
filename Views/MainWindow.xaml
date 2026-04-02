@@ -6,35 +6,39 @@
         Title="SyncWave — One Sound. Many Devices." 
         Height="720" Width="1100" MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
-        Background="#121220" Foreground="#E0E0E0"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent" Foreground="#D4D4D4"
         FontFamily="Segoe UI Variable, Segoe UI"
-        Icon="/Assets/logo.png">
+        Icon="/Assets/logo.png"
+        ResizeMode="CanResizeWithGrip">
 
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
 
     <Window.Resources>
-        <!-- ───── Color Palette (refined) ───── -->
-        <Color x:Key="BgPrimary">#121220</Color>
-        <Color x:Key="BgSecondary">#1A1A32</Color>
-        <Color x:Key="BgCard">#1E1E38</Color>
-        <Color x:Key="BgCardHover">#252548</Color>
-        <Color x:Key="AccentCyan">#00E5FF</Color>
-        <Color x:Key="AccentPurple">#7C4DFF</Color>
-        <Color x:Key="AccentGreen">#00E676</Color>
-        <Color x:Key="AccentRed">#FF5252</Color>
-        <Color x:Key="TextPrimary">#E8E8F0</Color>
-        <Color x:Key="TextSecondary">#8090A8</Color>
-        <Color x:Key="BorderSubtle">#2A2A50</Color>
+        <!-- ───── OLED Color Palette (muted, no neon) ───── -->
+        <Color x:Key="BgPrimary">#000000</Color>
+        <Color x:Key="BgSecondary">#0A0A0A</Color>
+        <Color x:Key="BgCard">#111111</Color>
+        <Color x:Key="BgCardHover">#1A1A1A</Color>
+        <Color x:Key="AccentPrimary">#B0B0B0</Color>
+        <Color x:Key="AccentMuted">#808080</Color>
+        <Color x:Key="AccentGreen">#5A9A5A</Color>
+        <Color x:Key="AccentRed">#B05050</Color>
+        <Color x:Key="AccentAmber">#A08040</Color>
+        <Color x:Key="TextPrimary">#D4D4D4</Color>
+        <Color x:Key="TextSecondary">#707070</Color>
+        <Color x:Key="BorderSubtle">#1E1E1E</Color>
 
         <SolidColorBrush x:Key="BgPrimaryBrush" Color="{StaticResource BgPrimary}" />
         <SolidColorBrush x:Key="BgSecondaryBrush" Color="{StaticResource BgSecondary}" />
         <SolidColorBrush x:Key="BgCardBrush" Color="{StaticResource BgCard}" />
-        <SolidColorBrush x:Key="AccentCyanBrush" Color="{StaticResource AccentCyan}" />
-        <SolidColorBrush x:Key="AccentPurpleBrush" Color="{StaticResource AccentPurple}" />
+        <SolidColorBrush x:Key="AccentPrimaryBrush" Color="{StaticResource AccentPrimary}" />
+        <SolidColorBrush x:Key="AccentMutedBrush" Color="{StaticResource AccentMuted}" />
         <SolidColorBrush x:Key="AccentGreenBrush" Color="{StaticResource AccentGreen}" />
         <SolidColorBrush x:Key="AccentRedBrush" Color="{StaticResource AccentRed}" />
+        <SolidColorBrush x:Key="AccentAmberBrush" Color="{StaticResource AccentAmber}" />
         <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimary}" />
         <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondary}" />
         <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtle}" />
@@ -56,20 +60,14 @@
                     <ControlTemplate TargetType="Slider">
                         <Grid VerticalAlignment="Center">
                             <!-- Track background -->
-                            <Border x:Name="TrackBg" Height="4" CornerRadius="2"
-                                    Background="#1A1A30" VerticalAlignment="Center" />
+                            <Border x:Name="TrackBg" Height="3" CornerRadius="1.5"
+                                    Background="#1A1A1A" VerticalAlignment="Center" />
                             <!-- Filled portion -->
                             <Canvas ClipToBounds="True" VerticalAlignment="Center">
-                                <Border x:Name="TrackFill" Height="4" CornerRadius="2"
+                                <Border x:Name="TrackFill" Height="3" CornerRadius="1.5"
                                         VerticalAlignment="Center"
-                                        Canvas.Left="0" Canvas.Top="0">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="{StaticResource AccentCyan}" Offset="0" />
-                                            <GradientStop Color="{StaticResource AccentPurple}" Offset="1" />
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-                                </Border>
+                                        Canvas.Left="0" Canvas.Top="0"
+                                        Background="#808080" />
                             </Canvas>
                             <Track x:Name="PART_Track" VerticalAlignment="Center">
                                 <Track.Thumb>
@@ -77,29 +75,16 @@
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
                                                 <Grid>
-                                                    <!-- Glow behind thumb -->
-                                                    <Ellipse Width="20" Height="20" Opacity="0.3">
-                                                        <Ellipse.Fill>
-                                                            <RadialGradientBrush>
-                                                                <GradientStop Color="{StaticResource AccentCyan}" Offset="0" />
-                                                                <GradientStop Color="Transparent" Offset="1" />
-                                                            </RadialGradientBrush>
-                                                        </Ellipse.Fill>
-                                                    </Ellipse>
                                                     <!-- Thumb circle -->
-                                                    <Ellipse x:Name="ThumbCircle" Width="14" Height="14"
-                                                             Fill="{StaticResource AccentCyanBrush}"
-                                                             Stroke="#121220" StrokeThickness="2">
-                                                        <Ellipse.Effect>
-                                                            <DropShadowEffect BlurRadius="6" ShadowDepth="0"
-                                                                              Color="{StaticResource AccentCyan}" Opacity="0.5" />
-                                                        </Ellipse.Effect>
-                                                    </Ellipse>
+                                                    <Ellipse x:Name="ThumbCircle" Width="12" Height="12"
+                                                             Fill="#B0B0B0"
+                                                             Stroke="#000000" StrokeThickness="1.5" />
                                                 </Grid>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="ThumbCircle" Property="Width" Value="16" />
-                                                        <Setter TargetName="ThumbCircle" Property="Height" Value="16" />
+                                                        <Setter TargetName="ThumbCircle" Property="Fill" Value="#D4D4D4" />
+                                                        <Setter TargetName="ThumbCircle" Property="Width" Value="14" />
+                                                        <Setter TargetName="ThumbCircle" Property="Height" Value="14" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -113,7 +98,7 @@
             </Setter>
         </Style>
 
-        <!-- Volume slider variant (purple accent) -->
+        <!-- Volume slider variant -->
         <Style x:Key="VolumeSlider" TargetType="Slider" BasedOn="{StaticResource ModernSlider}">
             <Setter Property="Maximum" Value="200" />
         </Style>
@@ -126,32 +111,21 @@
                     <ControlTemplate TargetType="CheckBox">
                         <Grid>
                             <Border x:Name="SwitchBg" Width="36" Height="20" CornerRadius="10"
-                                    Background="#2A2A50" BorderThickness="0" Cursor="Hand">
+                                    Background="#1E1E1E" BorderThickness="1" BorderBrush="#2A2A2A" Cursor="Hand">
                                 <Ellipse x:Name="SwitchDot" Width="14" Height="14"
-                                         Fill="#606080" HorizontalAlignment="Left" Margin="3,0,0,0">
-                                    <Ellipse.Effect>
-                                        <DropShadowEffect BlurRadius="4" ShadowDepth="1"
-                                                          Color="Black" Opacity="0.3" />
-                                    </Ellipse.Effect>
-                                </Ellipse>
+                                         Fill="#505050" HorizontalAlignment="Left" Margin="2,0,0,0" />
                             </Border>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="SwitchBg" Property="Background">
-                                    <Setter.Value>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="{StaticResource AccentCyan}" Offset="0" />
-                                            <GradientStop Color="{StaticResource AccentPurple}" Offset="1" />
-                                        </LinearGradientBrush>
-                                    </Setter.Value>
-                                </Setter>
+                                <Setter TargetName="SwitchBg" Property="Background" Value="#2A2A2A" />
+                                <Setter TargetName="SwitchBg" Property="BorderBrush" Value="#404040" />
                                 <Setter TargetName="SwitchDot" Property="HorizontalAlignment" Value="Right" />
-                                <Setter TargetName="SwitchDot" Property="Margin" Value="0,0,3,0" />
-                                <Setter TargetName="SwitchDot" Property="Fill" Value="White" />
+                                <Setter TargetName="SwitchDot" Property="Margin" Value="0,0,2,0" />
+                                <Setter TargetName="SwitchDot" Property="Fill" Value="#D4D4D4" />
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="SwitchBg" Property="Opacity" Value="0.9" />
+                                <Setter TargetName="SwitchBg" Property="BorderBrush" Value="#404040" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -159,12 +133,12 @@
             </Setter>
         </Style>
 
-        <!-- ═══════ BUTTON STYLE (with hover animation) ═══════ -->
+        <!-- ═══════ BUTTON STYLE ═══════ -->
         <Style x:Key="SyncButton" TargetType="Button">
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Padding" Value="24,12" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="#D4D4D4" />
+            <Setter Property="Padding" Value="20,10" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
@@ -177,27 +151,20 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="border" Background="{TemplateBinding Background}"
-                                CornerRadius="10" Padding="{TemplateBinding Padding}"
-                                BorderThickness="0" RenderTransformOrigin="0.5,0.5">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="12" ShadowDepth="2"
-                                                  Opacity="0.25" Color="Black" />
-                            </Border.Effect>
+                                CornerRadius="8" Padding="{TemplateBinding Padding}"
+                                BorderThickness="1" BorderBrush="#2A2A2A"
+                                RenderTransformOrigin="0.5,0.5">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Opacity" Value="0.9" />
-                                <Setter Property="RenderTransform">
-                                    <Setter.Value>
-                                        <ScaleTransform ScaleX="1.03" ScaleY="1.03" />
-                                    </Setter.Value>
-                                </Setter>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#404040" />
+                                <Setter TargetName="border" Property="Background" Value="#1A1A1A" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter Property="RenderTransform">
                                     <Setter.Value>
-                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                                        <ScaleTransform ScaleX="0.98" ScaleY="0.98" />
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
@@ -211,68 +178,83 @@
             </Setter>
         </Style>
 
-        <!-- ═══════ CARD BORDER (glassmorphism + hover) ═══════ -->
+        <!-- ═══════ CARD BORDER (minimal) ═══════ -->
         <Style x:Key="CardBorder" TargetType="Border">
-            <Setter Property="Background">
-                <Setter.Value>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#1E1E38" Offset="0" />
-                        <GradientStop Color="#1A1A35" Offset="0.5" />
-                        <GradientStop Color="#1C1C3A" Offset="1" />
-                    </LinearGradientBrush>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Background" Value="#0A0A0A" />
+            <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Padding" Value="18" />
             <Setter Property="Margin" Value="6" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush">
+            <Setter Property="BorderBrush" Value="#1A1A1A" />
+        </Style>
+
+        <!-- Device card item style -->
+        <Style x:Key="DeviceCard" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Margin" Value="0,3" />
+            <Setter Property="Background" Value="#080808" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#151515" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#111111" />
+                    <Setter Property="BorderBrush" Value="#252525" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ═══════ WINDOW CONTROL BUTTON ═══════ -->
+        <Style x:Key="WindowControlBtn" TargetType="Button">
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#808080" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="Template">
                 <Setter.Value>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#2A2A50" Offset="0" />
-                        <GradientStop Color="#1A1A3A" Offset="1" />
-                    </LinearGradientBrush>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.25" Color="#0A0A1A" />
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="#1A1A1A" />
+                                <Setter Property="Foreground" Value="#D4D4D4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <!-- Device card item style (hover effect) -->
-        <Style x:Key="DeviceCard" TargetType="Border">
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="14" />
-            <Setter Property="Margin" Value="0,4" />
-            <Setter Property="Background" Value="#141428" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#1E1E40" />
-            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
-            <Setter Property="RenderTransform">
+        <!-- Close button (red hover) -->
+        <Style x:Key="CloseBtn" TargetType="Button" BasedOn="{StaticResource WindowControlBtn}">
+            <Setter Property="Template">
                 <Setter.Value>
-                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="#B05050" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#1A1A35" />
-                    <Setter Property="BorderBrush" Value="#2E2E55" />
-                    <Setter Property="RenderTransform">
-                        <Setter.Value>
-                            <ScaleTransform ScaleX="1.005" ScaleY="1.005" />
-                        </Setter.Value>
-                    </Setter>
-                </Trigger>
-            </Style.Triggers>
         </Style>
 
         <!-- ═══════ STATUS PULSE ANIMATION ═══════ -->
         <Storyboard x:Key="PulseAnimation" RepeatBehavior="Forever">
             <DoubleAnimation Storyboard.TargetName="StatusPulse"
                              Storyboard.TargetProperty="Opacity"
-                             From="1" To="0.3" Duration="0:0:1.2"
+                             From="1" To="0.3" Duration="0:0:1.5"
                              AutoReverse="True">
                 <DoubleAnimation.EasingFunction>
                     <SineEase EasingMode="EaseInOut" />
@@ -282,9 +264,63 @@
 
     </Window.Resources>
 
-    <Grid Margin="18">
+    <Border BorderThickness="1" BorderBrush="#1A1A1A" CornerRadius="14" Background="#000000" ClipToBounds="True">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════ CUSTOM TITLE BAR ═══════════ -->
+        <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Logo / Title -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,8,0,8">
+                <Image Source="/Assets/logo.png" Width="20" Height="20" 
+                       Margin="0,0,8,0" VerticalAlignment="Center" 
+                       RenderOptions.BitmapScalingMode="HighQuality" />
+                <TextBlock FontSize="13" FontWeight="Medium" VerticalAlignment="Center"
+                           Foreground="#808080">
+                    SyncWave
+                </TextBlock>
+            </StackPanel>
+
+            <!-- Status Badge (centered-ish) -->
+            <Border Grid.Column="2" CornerRadius="12" Padding="12,4" VerticalAlignment="Center"
+                    Margin="0,0,10,0"
+                    Background="#0A0A0A" BorderThickness="1" BorderBrush="{StaticResource BorderSubtleBrush}">
+                <StackPanel Orientation="Horizontal">
+                    <Grid>
+                        <Ellipse x:Name="StatusPulse" Width="12" Height="12"
+                                 Margin="0,0,6,0" VerticalAlignment="Center" Opacity="0.3"
+                                 Fill="{Binding StatusBrush}" />
+                        <Ellipse Width="6" Height="6" Margin="0,0,6,0" VerticalAlignment="Center"
+                                 Fill="{Binding StatusBrush}" />
+                    </Grid>
+                    <TextBlock Text="{Binding PlaybackStatus}" FontWeight="Medium" 
+                               Foreground="{StaticResource TextPrimaryBrush}" FontSize="11" />
+                </StackPanel>
+            </Border>
+
+            <!-- Window Control Buttons -->
+            <StackPanel Grid.Column="3" Orientation="Horizontal">
+                <Button Content="─" Style="{StaticResource WindowControlBtn}" Click="MinimizeBtn_Click" />
+                <Button Content="□" Style="{StaticResource WindowControlBtn}" Click="MaximizeBtn_Click" />
+                <Button Content="✕" Style="{StaticResource CloseBtn}" Click="CloseBtn_Click" />
+            </StackPanel>
+        </Grid>
+
+        <!-- ═══════════ MAIN CONTENT ═══════════ -->
+        <Grid Grid.Row="1" Margin="16,8,16,16">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="360" />
+            <ColumnDefinition Width="350" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
@@ -294,52 +330,28 @@
         </Grid.RowDefinitions>
 
         <!-- ═══════════ HEADER ═══════════ -->
-        <Border Grid.ColumnSpan="2" Margin="0,0,0,14">
+        <Border Grid.ColumnSpan="2" Margin="0,0,0,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <!-- Logo / Title -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Image Source="/Assets/logo.png" Width="36" Height="36" 
-                           Margin="0,0,12,0" VerticalAlignment="Center" 
+                    <Image Source="/Assets/logo.png" Width="32" Height="32" 
+                           Margin="0,0,10,0" VerticalAlignment="Center" 
                            RenderOptions.BitmapScalingMode="HighQuality" />
                     <StackPanel>
-                        <TextBlock FontSize="26" FontWeight="Bold" VerticalAlignment="Center">
-                            <TextBlock.Foreground>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="{StaticResource AccentCyan}" Offset="0" />
-                                    <GradientStop Color="{StaticResource AccentPurple}" Offset="1" />
-                                </LinearGradientBrush>
-                            </TextBlock.Foreground>
+                        <TextBlock FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center"
+                                   Foreground="#D4D4D4">
                             SyncWave
                         </TextBlock>
                         <TextBlock Text="One Sound. Many Devices." 
                                    Foreground="{StaticResource TextSecondaryBrush}" 
-                                   FontSize="11" FontStyle="Italic" Margin="0,-2,0,0" Opacity="0.7" />
+                                   FontSize="10" Margin="0,-1,0,0" Opacity="0.8" />
                     </StackPanel>
                 </StackPanel>
-
-                <!-- Status Badge -->
-                <Border Grid.Column="2" CornerRadius="20" Padding="18,8" VerticalAlignment="Center"
-                        Background="#0D0D1A" BorderThickness="1" BorderBrush="{StaticResource BorderSubtleBrush}">
-                    <StackPanel Orientation="Horizontal">
-                        <Grid>
-                            <!-- Pulse glow (behind dot) -->
-                            <Ellipse x:Name="StatusPulse" Width="16" Height="16"
-                                     Margin="0,0,8,0" VerticalAlignment="Center" Opacity="0.3"
-                                     Fill="{Binding StatusBrush}" />
-                            <!-- Status dot -->
-                            <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
-                                     Fill="{Binding StatusBrush}" />
-                        </Grid>
-                        <TextBlock Text="{Binding PlaybackStatus}" FontWeight="SemiBold" 
-                                   Foreground="{StaticResource TextPrimaryBrush}" FontSize="13" />
-                    </StackPanel>
-                </Border>
             </Grid>
         </Border>
 
@@ -347,16 +359,16 @@
         <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardBorder}">
             <DockPanel>
                 <!-- Panel Header -->
-                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
-                    <TextBlock Text="🎧  Audio Devices" FontSize="17" FontWeight="SemiBold"
-                               Foreground="{StaticResource AccentCyanBrush}" />
+                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                    <TextBlock Text="Audio Devices" FontSize="15" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}" />
                     <TextBlock Text="Select devices, then click Start Sync" 
-                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" 
-                               Margin="0,4,0,0" Opacity="0.8" />
-                    <Button Content="↻ Refresh" Command="{Binding RefreshDevicesCommand}"
+                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" 
+                               Margin="0,3,0,0" />
+                    <Button Content="Refresh" Command="{Binding RefreshDevicesCommand}"
                             HorizontalAlignment="Left" Margin="0,10,0,0"
-                            Background="#252545" Style="{StaticResource SyncButton}"
-                            Padding="14,7" FontSize="12" />
+                            Background="#111111" Style="{StaticResource SyncButton}"
+                            Padding="14,6" FontSize="11" />
                 </StackPanel>
 
                 <!-- Device List -->
@@ -371,30 +383,25 @@
                                             <CheckBox DockPanel.Dock="Left" IsChecked="{Binding IsSelected}"
                                                       VerticalAlignment="Center" Margin="0,0,10,0"
                                                       Style="{StaticResource ToggleSwitch}" />
-                                            <Border DockPanel.Dock="Right" CornerRadius="6" Padding="8,3"
-                                                    VerticalAlignment="Center">
-                                                <Border.Background>
-                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                        <GradientStop Color="#1A2545" Offset="0" />
-                                                        <GradientStop Color="#1A1A3A" Offset="1" />
-                                                    </LinearGradientBrush>
-                                                </Border.Background>
-                                                <TextBlock Text="{Binding DeviceType}" FontSize="11"
-                                                           Foreground="{StaticResource AccentCyanBrush}" 
+                                            <Border DockPanel.Dock="Right" CornerRadius="4" Padding="7,2"
+                                                    VerticalAlignment="Center" Background="#141414"
+                                                    BorderThickness="1" BorderBrush="#1E1E1E">
+                                                <TextBlock Text="{Binding DeviceType}" FontSize="10"
+                                                           Foreground="{StaticResource TextSecondaryBrush}" 
                                                            FontWeight="Medium" />
                                             </Border>
-                                            <TextBlock Text="{Binding FriendlyName}" FontSize="14"
+                                            <TextBlock Text="{Binding FriendlyName}" FontSize="13"
                                                        FontWeight="Medium" Foreground="{StaticResource TextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                         </DockPanel>
 
                                         <!-- Status row -->
-                                        <DockPanel Margin="48,5,0,0">
-                                            <TextBlock FontSize="11" VerticalAlignment="Center"
+                                        <DockPanel Margin="48,4,0,0">
+                                            <TextBlock FontSize="10" VerticalAlignment="Center"
                                                        Foreground="{StaticResource TextSecondaryBrush}">
                                                 <Run Text="Latency:" />
                                                 <Run Text="{Binding MeasuredLatency, StringFormat='{}{0:F0}ms', Mode=OneWay}" 
-                                                     Foreground="{StaticResource AccentCyanBrush}" />
+                                                     Foreground="{StaticResource AccentPrimaryBrush}" />
                                                 <Run Text="  ·  " />
                                                 <Run Text="{Binding StatusText, Mode=OneWay}" />
                                             </TextBlock>
@@ -405,11 +412,12 @@
                                                     Visibility="{Binding IsSelected, Converter={StaticResource BoolToVis}}">
                                             
                                             <!-- Volume slider -->
-                                            <DockPanel Margin="0,0,0,6">
-                                                <TextBlock DockPanel.Dock="Left" Text="🔊" FontSize="13"
-                                                           VerticalAlignment="Center" Margin="0,0,6,0" />
-                                                <TextBlock DockPanel.Dock="Right" FontSize="12" Width="44" TextAlignment="Right"
-                                                           Foreground="{StaticResource AccentPurpleBrush}" VerticalAlignment="Center"
+                                            <DockPanel Margin="0,0,0,5">
+                                                <TextBlock DockPanel.Dock="Left" Text="Vol" FontSize="10"
+                                                           VerticalAlignment="Center" Margin="0,0,8,0"
+                                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock DockPanel.Dock="Right" FontSize="11" Width="40" TextAlignment="Right"
+                                                           Foreground="{StaticResource AccentPrimaryBrush}" VerticalAlignment="Center"
                                                            FontWeight="Medium">
                                                     <Run Text="{Binding Volume, StringFormat='{}{0:F0}', Mode=OneWay}" />
                                                     <Run Text="%" />
@@ -419,11 +427,12 @@
                                             </DockPanel>
 
                                             <!-- Delay slider -->
-                                            <DockPanel Margin="0,0,0,6">
-                                                <TextBlock DockPanel.Dock="Left" Text="⏱" FontSize="13"
-                                                           VerticalAlignment="Center" Margin="0,0,6,0" />
-                                                <TextBlock DockPanel.Dock="Right" FontSize="12" Width="52"
-                                                           Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"
+                                            <DockPanel Margin="0,0,0,5">
+                                                <TextBlock DockPanel.Dock="Left" Text="Delay" FontSize="10"
+                                                           VerticalAlignment="Center" Margin="0,0,8,0"
+                                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock DockPanel.Dock="Right" FontSize="11" Width="48"
+                                                           Foreground="{StaticResource AccentPrimaryBrush}" VerticalAlignment="Center"
                                                            FontWeight="Medium" TextAlignment="Right">
                                                     <Run Text="{Binding ManualDelay, StringFormat='{}{0:F0}', Mode=OneWay}" />
                                                     <Run Text="ms" />
@@ -434,25 +443,20 @@
 
                                             <!-- Buffer health bar -->
                                             <DockPanel>
-                                                <TextBlock DockPanel.Dock="Left" Text="Buffer:" FontSize="11"
+                                                <TextBlock DockPanel.Dock="Left" Text="Buffer" FontSize="10"
                                                            Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"
                                                            Margin="0,0,8,0" />
-                                                <TextBlock DockPanel.Dock="Right" FontSize="11" Margin="6,0,0,0"
+                                                <TextBlock DockPanel.Dock="Right" FontSize="10" Margin="6,0,0,0"
                                                            Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center">
                                                     <Run Text="{Binding BufferHealth, StringFormat='{}{0:F0}%', Mode=OneWay}" />
                                                 </TextBlock>
-                                                <Border CornerRadius="3" Background="#0A0A18" Height="6">
-                                                    <Border CornerRadius="3" HorizontalAlignment="Left"
-                                                            Width="{Binding BufferHealth, FallbackValue=0}">
+                                                <Border CornerRadius="2" Background="#111111" Height="4">
+                                                    <Border CornerRadius="2" HorizontalAlignment="Left"
+                                                            Width="{Binding BufferHealth, FallbackValue=0}"
+                                                            Background="#505050">
                                                         <Border.MaxWidth>
                                                             <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=DockPanel}" />
                                                         </Border.MaxWidth>
-                                                        <Border.Background>
-                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                                <GradientStop Color="{StaticResource AccentGreen}" Offset="0" />
-                                                                <GradientStop Color="{StaticResource AccentCyan}" Offset="1" />
-                                                            </LinearGradientBrush>
-                                                        </Border.Background>
                                                     </Border>
                                                 </Border>
                                             </DockPanel>
@@ -478,40 +482,29 @@
             <!-- ── Control Buttons ── -->
             <Border Grid.Row="0" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="⚡  Playback Control" FontSize="17" FontWeight="SemiBold"
-                               Foreground="{StaticResource AccentCyanBrush}" Margin="0,0,0,4" />
+                    <TextBlock Text="Playback Control" FontSize="15" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,3" />
                     <TextBlock Text="Play any audio on your system, then click Start Sync"
-                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,12"
-                               HorizontalAlignment="Center" Opacity="0.8" />
+                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,12"
+                               HorizontalAlignment="Center" />
 
                     <WrapPanel HorizontalAlignment="Center">
-                        <Button Content="▶  Start Sync" Command="{Binding StartSyncCommand}"
-                                Style="{StaticResource SyncButton}" Margin="6">
-                            <Button.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#00C853" Offset="0" />
-                                    <GradientStop Color="#00E676" Offset="1" />
-                                </LinearGradientBrush>
-                            </Button.Background>
-                        </Button>
-                        <Button Content="⏹  Stop Sync" Command="{Binding StopSyncCommand}"
-                                Style="{StaticResource SyncButton}" Margin="6">
-                            <Button.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#D50000" Offset="0" />
-                                    <GradientStop Color="#FF5252" Offset="1" />
-                                </LinearGradientBrush>
-                            </Button.Background>
-                        </Button>
+                        <Button Content="Start Sync" Command="{Binding StartSyncCommand}"
+                                Style="{StaticResource SyncButton}" Margin="6"
+                                Background="#111111" Foreground="#5A9A5A" />
+                        <Button Content="Stop Sync" Command="{Binding StopSyncCommand}"
+                                Style="{StaticResource SyncButton}" Margin="6"
+                                Background="#111111" Foreground="#B05050" />
                     </WrapPanel>
 
                     <!-- Error / info message -->
-                    <Border CornerRadius="8" Margin="0,10,0,0" Padding="12,8"
-                            Background="#1A0A0A"
+                    <Border CornerRadius="6" Margin="0,10,0,0" Padding="12,8"
+                            Background="#0D0808"
+                            BorderThickness="1" BorderBrush="#1E1414"
                             Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisConverter}, FallbackValue=Collapsed}">
                         <TextBlock Text="{Binding ErrorMessage}" 
                                    Foreground="{StaticResource AccentRedBrush}"
-                                   FontSize="12" TextWrapping="Wrap" FontWeight="Medium"
+                                   FontSize="11" TextWrapping="Wrap" FontWeight="Medium"
                                    HorizontalAlignment="Center" />
                     </Border>
                 </StackPanel>
@@ -520,12 +513,12 @@
             <!-- ── Master Delay ── -->
             <Border Grid.Row="1" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="🎛  Master Delay Offset" FontSize="13" FontWeight="SemiBold"
-                               Foreground="{StaticResource AccentPurpleBrush}" Margin="0,0,0,10" />
+                    <TextBlock Text="Master Delay Offset" FontSize="12" FontWeight="Medium"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8" />
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Right" Width="60" TextAlignment="Right" 
-                                   VerticalAlignment="Center" FontSize="13" FontWeight="Medium"
-                                   Foreground="{StaticResource AccentCyanBrush}">
+                        <TextBlock DockPanel.Dock="Right" Width="55" TextAlignment="Right" 
+                                   VerticalAlignment="Center" FontSize="12" FontWeight="Medium"
+                                   Foreground="{StaticResource AccentPrimaryBrush}">
                             <Run Text="{Binding MasterDelayOffset, StringFormat='{}{0:F0}', Mode=OneWay}" />
                             <Run Text="ms" />
                         </TextBlock>
@@ -538,22 +531,22 @@
             <!-- ── Waveform Visualization ── -->
             <Border Grid.Row="2" Style="{StaticResource CardBorder}">
                 <DockPanel>
-                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-                        <TextBlock Text="📊  Waveform" FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{StaticResource AccentCyanBrush}" />
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <TextBlock Text="Waveform" FontSize="12" FontWeight="Medium"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
                         <!-- Audio level indicator -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <TextBlock Text="Level: " FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
+                            <TextBlock Text="Level " FontSize="9" Foreground="{StaticResource TextSecondaryBrush}"
                                        VerticalAlignment="Center" />
-                            <Border CornerRadius="3" Background="#0A0A18" Height="8" Width="80"
+                            <Border CornerRadius="2" Background="#111111" Height="6" Width="70"
                                     VerticalAlignment="Center">
-                                <Border CornerRadius="3" HorizontalAlignment="Left"
+                                <Border CornerRadius="2" HorizontalAlignment="Left"
                                         Width="{Binding AudioLevel, Converter={StaticResource LevelToWidthConverter}, FallbackValue=0}">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="{StaticResource AccentGreen}" Offset="0" />
-                                            <GradientStop Color="#FFD740" Offset="0.7" />
-                                            <GradientStop Color="{StaticResource AccentRed}" Offset="1" />
+                                            <GradientStop Color="#505050" Offset="0" />
+                                            <GradientStop Color="#808080" Offset="0.7" />
+                                            <GradientStop Color="#B05050" Offset="1" />
                                         </LinearGradientBrush>
                                     </Border.Background>
                                 </Border>
@@ -561,7 +554,8 @@
                         </StackPanel>
                     </DockPanel>
 
-                    <Border CornerRadius="10" Background="#0A0A18" Padding="4" ClipToBounds="True">
+                    <Border CornerRadius="8" Background="#060606" Padding="4" ClipToBounds="True"
+                            BorderThickness="1" BorderBrush="#111111">
                         <Canvas x:Name="WaveformCanvas" SizeChanged="WaveformCanvas_SizeChanged" />
                     </Border>
                 </DockPanel>
@@ -572,26 +566,26 @@
                 <UniformGrid Columns="3">
                     <!-- Active Devices -->
                     <StackPanel HorizontalAlignment="Center" Margin="8,0">
-                        <TextBlock Text="Active Devices" FontSize="10" 
+                        <TextBlock Text="Active Devices" FontSize="9" 
                                    Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" />
-                        <TextBlock Text="{Binding ActiveDeviceCount}" FontSize="30" FontWeight="Bold"
-                                   Foreground="{StaticResource AccentGreenBrush}" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding ActiveDeviceCount}" FontSize="28" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
                     </StackPanel>
                     <!-- Max Latency Diff -->
                     <StackPanel HorizontalAlignment="Center" Margin="8,0">
-                        <TextBlock Text="Max Latency Diff" FontSize="10"
+                        <TextBlock Text="Max Latency Diff" FontSize="9"
                                    Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" />
-                        <TextBlock FontSize="30" FontWeight="Bold" HorizontalAlignment="Center"
-                                   Foreground="{StaticResource AccentCyanBrush}">
+                        <TextBlock FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center"
+                                   Foreground="{StaticResource TextPrimaryBrush}">
                             <Run Text="{Binding MaxLatencyDiff, StringFormat='{}{0:F1}', Mode=OneWay}" />
-                            <Run Text="ms" FontSize="14" />
+                            <Run Text="ms" FontSize="13" />
                         </TextBlock>
                     </StackPanel>
                     <!-- Status -->
                     <StackPanel HorizontalAlignment="Center" Margin="8,0">
-                        <TextBlock Text="Status" FontSize="10"
+                        <TextBlock Text="Status" FontSize="9"
                                    Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" />
-                        <TextBlock Text="{Binding PlaybackStatus}" FontSize="22" FontWeight="Bold"
+                        <TextBlock Text="{Binding PlaybackStatus}" FontSize="20" FontWeight="SemiBold"
                                    HorizontalAlignment="Center"
                                    Foreground="{Binding StatusBrush}" />
                     </StackPanel>
@@ -600,16 +594,18 @@
         </Grid>
 
         <!-- ═══════════ FOOTER ═══════════ -->
-        <Border Grid.Row="2" Grid.ColumnSpan="2" Margin="0,10,0,0" Padding="10,6">
+        <Border Grid.Row="2" Grid.ColumnSpan="2" Margin="0,8,0,0" Padding="10,5">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Right" Text="v1.1.0" FontSize="10"
-                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Opacity="0.6" />
-                <TextBlock FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"
-                           Opacity="0.6">
-                    <Run Text="SyncWave" FontWeight="SemiBold" />
+                <TextBlock DockPanel.Dock="Right" Text="v1.1.0" FontSize="9"
+                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Opacity="0.5" />
+                <TextBlock FontSize="9" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"
+                           Opacity="0.5">
+                    <Run Text="SyncWave" FontWeight="Medium" />
                     <Run Text=" — System audio routed via WASAPI loopback. No kernel drivers required." />
                 </TextBlock>
             </DockPanel>
         </Border>
     </Grid>
+    </Grid>
+    </Border>
 </Window>

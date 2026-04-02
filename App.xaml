@@ -6,8 +6,8 @@
         <!-- Global Dark Theme Overrides -->
 
         <!-- Window / Control Foreground -->
-        <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="#E8E8F0" />
-        <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="#E8E8F0" />
+        <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="#D4D4D4" />
+        <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="#D4D4D4" />
 
         <!-- ScrollBar Styling -->
         <Style TargetType="ScrollViewer">
@@ -24,9 +24,9 @@
 
         <!-- ToolTip dark theme -->
         <Style TargetType="ToolTip">
-            <Setter Property="Background" Value="#1E1E38" />
-            <Setter Property="Foreground" Value="#E8E8F0" />
-            <Setter Property="BorderBrush" Value="#2A2A50" />
+            <Setter Property="Background" Value="#111111" />
+            <Setter Property="Foreground" Value="#D4D4D4" />
+            <Setter Property="BorderBrush" Value="#1E1E1E" />
             <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI" />
         </Style>
     </Application.Resources>
