@@ -18,6 +18,20 @@
 
 ---
 
+## 📥 Download
+
+<p align="center">
+  <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/latest">
+    <img src="https://img.shields.io/badge/⬇_Download-SyncWave.exe-28A745?style=for-the-badge&logo=windows" alt="Download SyncWave" />
+  </a>
+</p>
+
+> **Quick Start:** Download the latest `SyncWave.exe` from the [Releases](https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/latest) page — no installation required, just run it.
+>
+> - **Self-contained build** (~65 MB) — runs on any Windows 10/11 machine, no .NET runtime needed.
+
+---
+
 ## ✨ Features
 
 | Feature | Description |
@@ -50,7 +64,7 @@
 
 ```powershell
 # Clone the repo
-git clone https://github.com/yourusername/SyncWave.git
+git clone https://github.com/NARESH-ASHOK-MALI/SyncWave.git
 cd SyncWave
 
 # Build and run
