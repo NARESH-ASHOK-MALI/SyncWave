@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyncWave — Stream Audio to Multiple Devices Simultaneously</title>
+    <meta name="description" content="Stream system audio to multiple Bluetooth, USB, and wired devices simultaneously with per-device volume & latency control. Free, open-source Windows app.">
+    <meta name="keywords" content="multi-device audio, bluetooth audio splitter, audio sync, Windows audio streaming, WASAPI">
+    <meta name="author" content="Naresh Ashok Mali">
+    <meta property="og:title" content="SyncWave — One Sound. Many Devices.">
+    <meta property="og:description" content="Stream system audio to multiple Bluetooth, USB, and wired devices simultaneously.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://naresh-ashok-mali.github.io/SyncWave/">
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Animated background particles -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <img src="assets/logo.png" alt="SyncWave Logo" class="nav-logo-img">
+                <span>SyncWave</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#tech">Tech Stack</a>
+                <a href="#download" class="nav-cta">Download</a>
+            </div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+        <div class="mobile-nav" id="mobile-nav">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#tech">Tech Stack</a>
+            <a href="#download" class="nav-cta">Download</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero">
+        <div class="hero-glow hero-glow-1"></div>
+        <div class="hero-glow hero-glow-2"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                Open Source & Free
+            </div>
+            <h1>
+                <span class="hero-line">One Sound.</span>
+                <span class="hero-line gradient-text">Many Devices.</span>
+            </h1>
+            <p class="hero-subtitle">
+                Stream system audio to multiple Bluetooth, USB, and wired devices simultaneously — with real-time per-device volume & latency control.
+            </p>
+            <div class="hero-actions">
+                <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/latest" class="btn btn-primary" id="hero-download-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Download for Windows
+                </a>
+                <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave" class="btn btn-secondary" id="hero-github-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    View on GitHub
+                </a>
+            </div>
+            <div class="hero-meta">
+                <div class="hero-meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+                    Windows 10/11
+                </div>
+                <div class="hero-meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    No Install Required
+                </div>
+                <div class="hero-meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    MIT License
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="device-ring">
+                <div class="ring-pulse"></div>
+                <div class="ring-pulse ring-pulse-2"></div>
+                <div class="center-icon">
+                    <img src="assets/logo.png" alt="SyncWave" class="center-logo">
+                </div>
+                <div class="orbit-device" style="--angle: 0deg; --delay: 0s;">
+                    <div class="device-icon">🎧</div>
+                    <span>Bluetooth</span>
+                </div>
+                <div class="orbit-device" style="--angle: 72deg; --delay: 0.2s;">
+                    <div class="device-icon">🔊</div>
+                    <span>Speaker</span>
+                </div>
+                <div class="orbit-device" style="--angle: 144deg; --delay: 0.4s;">
+                    <div class="device-icon">🎵</div>
+                    <span>USB DAC</span>
+                </div>
+                <div class="orbit-device" style="--angle: 216deg; --delay: 0.6s;">
+                    <div class="device-icon">🎤</div>
+                    <span>Monitor</span>
+                </div>
+                <div class="orbit-device" style="--angle: 288deg; --delay: 0.8s;">
+                    <div class="device-icon">🎶</div>
+                    <span>Wired</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Features</span>
+                <h2>Everything you need for <span class="gradient-text">multi-device audio</span></h2>
+                <p>Professional-grade audio routing with a beautiful, intuitive interface.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card" data-animate>
+                    <div class="feature-icon-wrap">
+                        <div class="feature-icon">🔊</div>
+                    </div>
+                    <h3>Multi-Device Output</h3>
+                    <p>Stream to unlimited audio devices in parallel. Bluetooth headphones, USB speakers, wired monitors — all at once.</p>
+                </div>
+                <div class="feature-card" data-animate>
+                    <div class="feature-icon-wrap">
+                        <div class="feature-icon">🎯</div>
+                    </div>
+                    <h3>Latency Compensation</h3>
+                    <p>Auto-syncs faster devices to the slowest. Fine-tune per-device delay from 0–500ms for perfect lip-sync.</p>
+                </div>
+                <div class="feature-card" data-animate>
+                    <div class="feature-icon-wrap">
+                        <div class="feature-icon">🔈</div>
+                    </div>
+                    <h3>Real-Time Volume</h3>
+                    <p>Per-device volume control from 0–200% with instant adjustment — no buffer delay, no interruptions.</p>
+                </div>
+                <div class="feature-card" data-animate>
+                    <div class="feature-icon-wrap">
+                        <div class="feature-icon">📊</div>
+                    </div>
+                    <h3>Live Monitoring</h3>
+                    <p>Waveform visualization, buffer health bars, and latency readouts — see your audio pipeline in real-time.</p>
+                </div>
+                <div class="feature-card" data-animate>
+                    <div class="feature-icon-wrap">
+                        <div class="feature-icon">🔄</div>
+                    </div>
+                    <h3>Auto-Reconnect</h3>
+                    <p>Bluetooth device disconnected? SyncWave gracefully handles it and polls for reconnection automatically.</p>
+                </div>
+                <div class="feature-card" data-animate>
+                    <div class="feature-icon-wrap">
+                        <div class="feature-icon">🚫</div>
+                    </div>
+                    <h3>Echo Prevention</h3>
+                    <p>Auto-detects the source device and skips it to prevent the feedback loop that causes audio doubling.</p>
+                </div>
+                <div class="feature-card" data-animate>
+                    <div class="feature-icon-wrap">
+                        <div class="feature-icon">💾</div>
+                    </div>
+                    <h3>Profile Persistence</h3>
+                    <p>Device selection, volume levels, and delay settings are automatically saved and restored between sessions.</p>
+                </div>
+                <div class="feature-card" data-animate>
+                    <div class="feature-icon-wrap">
+                        <div class="feature-icon">🎨</div>
+                    </div>
+                    <h3>Dark Theme UI</h3>
+                    <p>Beautiful modern WPF interface with cyan-purple gradient accents designed for comfortable, extended use.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">How It Works</span>
+                <h2>Engineered for <span class="gradient-text">perfect sync</span></h2>
+                <p>A sophisticated audio pipeline built on Windows Core Audio (WASAPI).</p>
+            </div>
+            <div class="pipeline-visual">
+                <div class="pipeline-step" data-animate>
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>System Audio Capture</h3>
+                        <p>WASAPI loopback captures all system audio in real-time at native quality — games, music, calls, everything.</p>
+                    </div>
+                </div>
+                <div class="pipeline-connector">
+                    <div class="connector-line"></div>
+                    <div class="connector-dot"></div>
+                </div>
+                <div class="pipeline-step" data-animate>
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Latency Measurement</h3>
+                        <p>Each device's hardware latency is measured via <code>AudioClient.StreamLatency</code>. The maximum is used as the sync baseline.</p>
+                    </div>
+                </div>
+                <div class="pipeline-connector">
+                    <div class="connector-line"></div>
+                    <div class="connector-dot"></div>
+                </div>
+                <div class="pipeline-step" data-animate>
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Delay Compensation</h3>
+                        <p>High-performance circular buffers insert calculated delays: <code>maxLatency − deviceLatency + manualOffset</code></p>
+                    </div>
+                </div>
+                <div class="pipeline-connector">
+                    <div class="connector-line"></div>
+                    <div class="connector-dot"></div>
+                </div>
+                <div class="pipeline-step" data-animate>
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Volume Scaling & Output</h3>
+                        <p>Real-time volume scaling (0–200%) applied per-device, then routed through WasapiOut to each physical device.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack Section -->
+    <section id="tech">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Tech Stack</span>
+                <h2>Built with <span class="gradient-text">modern technology</span></h2>
+            </div>
+            <div class="tech-grid">
+                <div class="tech-card" data-animate>
+                    <div class="tech-icon">.NET</div>
+                    <h3>.NET 8 (C#)</h3>
+                    <p>Runtime</p>
+                </div>
+                <div class="tech-card" data-animate>
+                    <div class="tech-icon">WPF</div>
+                    <h3>WPF (XAML)</h3>
+                    <p>UI Framework</p>
+                </div>
+                <div class="tech-card" data-animate>
+                    <div class="tech-icon">♪</div>
+                    <h3>NAudio 2.2.1</h3>
+                    <p>Audio Library</p>
+                </div>
+                <div class="tech-card" data-animate>
+                    <div class="tech-icon">W</div>
+                    <h3>WASAPI</h3>
+                    <p>Core Audio API</p>
+                </div>
+            </div>
+            <div class="performance-stats">
+                <div class="stat" data-animate>
+                    <div class="stat-value">&lt;10%</div>
+                    <div class="stat-label">CPU Usage</div>
+                </div>
+                <div class="stat" data-animate>
+                    <div class="stat-value">~100ms</div>
+                    <div class="stat-label">Pipeline Latency</div>
+                </div>
+                <div class="stat" data-animate>
+                    <div class="stat-value">5s</div>
+                    <div class="stat-label">Buffer Depth</div>
+                </div>
+                <div class="stat" data-animate>
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">GC Pressure</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download / CTA Section -->
+    <section id="download">
+        <div class="section-container">
+            <div class="download-card">
+                <div class="download-glow"></div>
+                <div class="download-content">
+                    <h2>Ready to sync your audio?</h2>
+                    <p>Download SyncWave for free. No installation, no sign-up — just run the exe.</p>
+                    <div class="download-actions">
+                        <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/latest" class="btn btn-primary btn-lg" id="footer-download-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Download SyncWave.exe
+                        </a>
+                    </div>
+                    <div class="download-info">
+                        <span>Windows 10/11 (64-bit)</span>
+                        <span>•</span>
+                        <span>~65 MB</span>
+                        <span>•</span>
+                        <span>Self-contained</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <img src="assets/logo.png" alt="SyncWave" class="footer-logo">
+                    <span>SyncWave</span>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave">GitHub</a>
+                    <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases">Releases</a>
+                    <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/issues">Issues</a>
+                    <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/blob/main/LICENSE">License</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>Made with ❤️ for multi-device audio enthusiasts</p>
+                <p class="footer-copy">© 2026 SyncWave. Released under the MIT License.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
