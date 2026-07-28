@@ -233,6 +233,7 @@ namespace SyncWave.Core
                         pBlobData = pParams,
                     };
 
+                    Logger.Info($"[Interop] PID={myPid}, calling ActivateAudioInterfaceAsync...");
                     var handler = new ActivationHandler();
                     NativeMethods.ActivateAudioInterfaceAsync(
                         "VAD\\Process_Loopback",
@@ -241,31 +242,38 @@ namespace SyncWave.Core
                         handler,
                         out _);
 
-                    if (!handler.Wait(1000) || handler.HResult < 0)
+                    bool waited = handler.Wait(1000);
+                    Logger.Info($"[Interop] ActivateAudioInterfaceAsync completed: waited={waited}, HR=0x{handler.HResult:X8}, hasInterface={handler.ActivatedInterface != null}");
+
+                    if (!waited || handler.HResult < 0)
                     {
                         throw new COMException(
                             $"Process loopback activation failed or timed out with HR 0x{handler.HResult:X8}.",
                             handler.HResult);
                     }
 
-                    // The COM object returned by ActivateAudioInterfaceAsync doesn't
-                    // support direct C# cast to our privately-defined IAudioClient
-                    // (E_NOINTERFACE). Manually QueryInterface on the raw IUnknown
-                    // pointer to obtain the correct vtable pointer.
+                    // ── Obtain IAudioClient via manual QueryInterface ──
+                    Logger.Info("[Interop] Getting IUnknown for activated interface...");
                     IntPtr pUnk = Marshal.GetIUnknownForObject(handler.ActivatedInterface!);
+                    Logger.Info($"[Interop] IUnknown ptr = 0x{pUnk:X}");
                     try
                     {
-                        Guid iid = IID_IAudioClient;
-                        Marshal.ThrowExceptionForHR(
-                            Marshal.QueryInterface(pUnk, ref iid, out IntPtr pAudioClient));
+                        Guid iidAudioClient = IID_IAudioClient;
+                        int hrQI = Marshal.QueryInterface(pUnk, ref iidAudioClient, out IntPtr pAudioClient);
+                        Logger.Info($"[Interop] QueryInterface for IAudioClient: HR=0x{hrQI:X8}, ptr=0x{pAudioClient:X}");
+                        Marshal.ThrowExceptionForHR(hrQI);
+
+                        Logger.Info("[Interop] Wrapping IAudioClient ptr via GetObjectForIUnknown...");
                         _audioClient = (IAudioClient)Marshal.GetObjectForIUnknown(pAudioClient);
                         Marshal.Release(pAudioClient);
+                        Logger.Info("[Interop] IAudioClient acquired successfully.");
                     }
                     finally
                     {
                         Marshal.Release(pUnk);
                     }
 
+                    // ── Initialize IAudioClient ──
                     // Configure IEEE 32-bit Float 48kHz Stereo Format (matches NAudio & VolumeWaveProvider)
                     var nativeFormat = new WAVEFORMATEX
                     {
@@ -285,23 +293,50 @@ namespace SyncWave.Core
                         Marshal.StructureToPtr(nativeFormat, pFmt, false);
 
                         uint streamFlags = AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
-                        int hr = _audioClient.Initialize(0, streamFlags, 0, 0, pFmt, IntPtr.Zero);
-                        Marshal.ThrowExceptionForHR(hr);
+                        Logger.Info($"[Interop] Calling IAudioClient.Initialize(shareMode=0, flags=0x{streamFlags:X8})...");
+                        int hrInit = _audioClient.Initialize(0, streamFlags, 0, 0, pFmt, IntPtr.Zero);
+                        Logger.Info($"[Interop] IAudioClient.Initialize returned HR=0x{hrInit:X8}");
+                        Marshal.ThrowExceptionForHR(hrInit);
                     }
                     finally
                     {
                         Marshal.FreeCoTaskMem(pFmt);
                     }
 
+                    // ── Obtain IAudioCaptureClient via manual QueryInterface ──
+                    Logger.Info("[Interop] Calling IAudioClient.GetService for IAudioCaptureClient...");
                     Guid captureGuid = IID_IAudioCaptureClient;
                     int hrGetService = _audioClient.GetService(ref captureGuid, out object captureObj);
+                    Logger.Info($"[Interop] GetService returned HR=0x{hrGetService:X8}, hasObj={captureObj != null}");
                     Marshal.ThrowExceptionForHR(hrGetService);
-                    _captureClient = (IAudioCaptureClient)captureObj;
+
+                    // Apply the same manual QueryInterface pattern to avoid E_NOINTERFACE
+                    Logger.Info("[Interop] Getting IUnknown for captureObj...");
+                    IntPtr pCaptureUnk = Marshal.GetIUnknownForObject(captureObj!);
+                    Logger.Info($"[Interop] CaptureClient IUnknown ptr = 0x{pCaptureUnk:X}");
+                    try
+                    {
+                        Guid iidCapture = IID_IAudioCaptureClient;
+                        int hrCaptureQI = Marshal.QueryInterface(pCaptureUnk, ref iidCapture, out IntPtr pCaptureClient);
+                        Logger.Info($"[Interop] QueryInterface for IAudioCaptureClient: HR=0x{hrCaptureQI:X8}, ptr=0x{pCaptureClient:X}");
+                        Marshal.ThrowExceptionForHR(hrCaptureQI);
+
+                        Logger.Info("[Interop] Wrapping IAudioCaptureClient ptr via GetObjectForIUnknown...");
+                        _captureClient = (IAudioCaptureClient)Marshal.GetObjectForIUnknown(pCaptureClient);
+                        Marshal.Release(pCaptureClient);
+                        Logger.Info("[Interop] IAudioCaptureClient acquired successfully.");
+                    }
+                    finally
+                    {
+                        Marshal.Release(pCaptureUnk);
+                    }
 
                     // NAudio WaveFormat instance for consumers
                     _captureFormat = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
 
+                    Logger.Info("[Interop] Calling IAudioClient.Start()...");
                     int hrStart = _audioClient.Start();
+                    Logger.Info($"[Interop] IAudioClient.Start returned HR=0x{hrStart:X8}");
                     Marshal.ThrowExceptionForHR(hrStart);
 
                     _isCapturing = true;
@@ -315,7 +350,7 @@ namespace SyncWave.Core
                     _captureThread.Start();
 
                     CaptureFormatAvailable?.Invoke(_captureFormat);
-                    Logger.Info($"Process Loopback capture started successfully ({_captureFormat.SampleRate}Hz, {_captureFormat.BitsPerSample}-bit float, {_captureFormat.Channels}ch, PID: {myPid} excluded).");
+                    Logger.Info($"[Interop] Process Loopback capture started successfully ({_captureFormat.SampleRate}Hz, {_captureFormat.BitsPerSample}-bit float, {_captureFormat.Channels}ch, PID: {myPid} excluded).");
                 }
                 catch (Exception ex)
                 {
