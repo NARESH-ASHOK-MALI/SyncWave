@@ -407,9 +407,22 @@
                                             </TextBlock>
                                         </DockPanel>
 
-                                        <!-- Controls (visible when selected) -->
-                                        <StackPanel Margin="48,8,0,0" 
-                                                    Visibility="{Binding IsSelected, Converter={StaticResource BoolToVis}}">
+                                        <!-- Controls (visible when selected AND not the default device) -->
+                                        <StackPanel Margin="48,8,0,0">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding IsSelected}" Value="True" />
+                                                                <Condition Binding="{Binding IsDefaultDevice}" Value="False" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
                                             
                                             <!-- Volume slider -->
                                             <DockPanel Margin="0,0,0,5">
@@ -461,6 +474,29 @@
                                                 </Border>
                                             </DockPanel>
                                         </StackPanel>
+
+                                        <!-- Default device info (visible when selected AND is the default device) -->
+                                        <Border Margin="48,8,0,0" Padding="10,8" CornerRadius="6"
+                                                Background="#0A0A0A" BorderThickness="1" BorderBrush="#1A1A1A">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding IsSelected}" Value="True" />
+                                                                <Condition Binding="{Binding IsDefaultDevice}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
+                                                       FontStyle="Italic">
+                                                Use Windows volume slider to adjust.
+                                            </TextBlock>
+                                        </Border>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
