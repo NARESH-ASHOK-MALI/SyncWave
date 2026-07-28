@@ -13,7 +13,7 @@ namespace SyncWave.Core
 {
     /// <summary>
     /// Manages parallel audio output streams to multiple devices.
-    /// Each device gets its own WasapiOut + TightBufferWaveProvider (near-zero latency).
+    /// Each device gets its own WasapiOut + BufferedWaveProvider.
     /// Supports hot-plug add/remove of devices during playback.
     /// </summary>
     public class AudioOutputService : IDisposable
@@ -144,18 +144,11 @@ namespace SyncWave.Core
 
                     var stream = new DeviceStream(device.DeviceId);
 
-                    // Adaptive latency based on device type
-                    int desiredLatencyMs = GetDesiredLatency(device.DeviceType);
-
-                    // BufferedWaveProvider with 2s capacity — generous enough that the
-                    // natural ~15-20ms of buffered data shows as <1% (near zero).
-                    // ReadFully=true ensures silence output when buffer is empty (no underruns).
-                    // No silence pre-fill — that was causing the old 2-3% idle buffer level.
+                    // Create buffered provider (2 seconds — reduced from 5s, still generous)
                     stream.Buffer = new BufferedWaveProvider(_sourceFormat)
                     {
                         BufferLength = _sourceFormat.AverageBytesPerSecond * 2,
-                        DiscardOnBufferOverflow = true,
-                        ReadFully = true
+                        DiscardOnBufferOverflow = true
                     };
 
                     Logger.Info($"Created buffer: {stream.Buffer.BufferLength} bytes, format: {_sourceFormat}");
@@ -167,15 +160,20 @@ namespace SyncWave.Core
                     float initVol = _deviceVolumes.GetValueOrDefault(device.DeviceId, 1.0f);
                     stream.VolumeProvider.Volume = initVol;
 
+                    // Adaptive latency based on device type
+                    int desiredLatencyMs = GetDesiredLatency(device.DeviceType);
+
                     // Event-driven mode (useEventSync: true) — lower jitter than timer mode
                     // Falls back to shared mode for compatibility
                     stream.Player = new WasapiOut(mmDevice, AudioClientShareMode.Shared, true, desiredLatencyMs);
                     stream.Player.PlaybackStopped += (s, e) => OnPlaybackStopped(device.DeviceId, device.FriendlyName, e);
                     stream.Player.Init(stream.VolumeProvider);
 
-                    // No silence pre-fill — BufferedWaveProvider with ReadFully=true
-                    // outputs silence when empty, so no underruns. This avoids the
-                    // 30-80ms pre-fill that was the main cause of the old 2-3% buffer level.
+                    // Pre-fill with silence matching the desired latency to prevent underruns
+                    int prefillBytes = _sourceFormat.AverageBytesPerSecond * desiredLatencyMs / 1000;
+                    prefillBytes = (prefillBytes / _sourceFormat.BlockAlign) * _sourceFormat.BlockAlign;
+                    var silence = new byte[prefillBytes];
+                    stream.Buffer.AddSamples(silence, 0, silence.Length);
 
                     Logger.Info($"WasapiOut initialized for {device.FriendlyName}, " +
                                 $"mode: event-driven, latency: {desiredLatencyMs}ms, " +
