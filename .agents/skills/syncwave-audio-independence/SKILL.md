@@ -56,10 +56,41 @@ session level — **upstream of any device's endpoint volume**.
   It's a stopgap already in the codebase; the goal of this refactor is to
   make it unnecessary by removing the Source/output asymmetry entirely.
 
-Once process-loopback capture is in place, **every** connected device
-(the old "Source" included) becomes a symmetric, independently-controlled
-output device — same code path, same `VolumeWaveProvider`, same slider.
-There is no more structurally special device.
+Once process-loopback capture is in place, capture itself is fully
+independent of every device's Windows volume — this part IS fully
+symmetric and required no exceptions.
+
+**However, one exception remains, and it is permanent, not a stopgap:**
+whichever device is currently Windows' default render device will always
+receive system audio *natively* (Path 1) regardless of anything SyncWave
+does, because that's simply what being the OS default device means.
+Once that device is *also* sent SyncWave's own re-rendered copy via
+WasapiOut (Path 2), both paths physically converge on the same hardware,
+offset by processing latency — an audible echo. This is the real cost of
+choosing process-loopback capture over a virtual audio cable (Option A):
+a virtual cable would have made every device symmetric, since nothing
+would play natively anywhere; without one, the currently-default device
+cannot be given its own independent WasapiOut render without echoing.
+
+There is no driver-free way around this — muting that device's Windows
+endpoint volume to silence just Path 1 doesn't work (endpoint volume is
+the final stage before hardware and mutes Path 2 too), and muting other
+apps' individual sessions doesn't work either (process-loopback capture
+taps that same session mix, so it would silence audio for every other
+synced device too).
+
+**Final, correct architecture:** every device *except* whichever one is
+currently Windows' default gets full symmetric treatment — own
+`WasapiOut`, own `VolumeWaveProvider`, own independent app slider, no
+skip logic, no volume lock (unnecessary now — capture doesn't depend on
+any device's Windows volume). The currently-default device alone is
+skipped from `AddDevice()` to prevent the echo, and its volume remains
+controlled solely by the Windows taskbar slider — not as a workaround to
+revisit, but as the genuine ceiling of what's achievable without adding
+a virtual-driver dependency, which was explicitly ruled out earlier in
+this project. Do not attempt to eliminate this exception without first
+revisiting the Option A (virtual cable) vs. B (process loopback)
+decision itself.
 
 ## Implementation plan (phased)
 

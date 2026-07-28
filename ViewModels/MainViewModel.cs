@@ -227,7 +227,7 @@ namespace SyncWave.ViewModels
                         {
                             DeviceId = ep.ID,
                             FriendlyName = ep.FriendlyName,
-                            DeviceType = DetectDeviceType(ep),
+                            DeviceType = isDefault ? "🔊 Default (OS volume)" : DetectDeviceType(ep),
                             IsDefaultDevice = isDefault
                         };
 
@@ -260,7 +260,7 @@ namespace SyncWave.ViewModels
                     if (d.IsDefaultDevice != isDefault)
                     {
                         d.IsDefaultDevice = isDefault;
-                        d.DeviceType = DetectDeviceType(enumerator.GetDevice(d.DeviceId));
+                        d.DeviceType = isDefault ? "🔊 Default (OS volume)" : DetectDeviceType(enumerator.GetDevice(d.DeviceId));
                     }
 
                     // Sync volume from Windows system only on manual refresh
@@ -377,17 +377,39 @@ namespace SyncWave.ViewModels
                 // Configure output service with capture format
                 _outputService.SetSourceFormat(_captureService.CaptureFormat);
 
-                // Add selected devices to output
+                // Add selected devices to output.
+                // Skip the Windows default render device — it already receives native OS audio
+                // directly from Windows, so sending our WasapiOut copy would create a ~30ms echo.
+                // Its volume is controlled via the Windows taskbar slider (OS volume).
+                // NOTE: No LockSourceVolume(100%) — process loopback capture is upstream of all
+                // endpoint volumes, so the default device's Windows volume is freely adjustable.
                 int addedCount = 0;
+                int skippedDefault = 0;
                 foreach (var device in selectedDevices)
                 {
+                    if (device.IsDefaultDevice)
+                    {
+                        Logger.Info($"Skipping default device '{device.FriendlyName}' — receives native OS audio directly.");
+                        device.StatusText = "Default (OS volume)";
+                        skippedDefault++;
+                        continue;
+                    }
+
                     _latencyManager.SetManualDelay(device.DeviceId, device.ManualDelay + MasterDelayOffset);
                     _outputService.SetDeviceVolume(device.DeviceId, (float)(device.Volume / 100.0));
                     _outputService.AddDevice(device);
                     if (!device.HasError) addedCount++;
                 }
 
-                if (addedCount == 0)
+                if (addedCount == 0 && skippedDefault > 0)
+                {
+                    ErrorMessage = "⚠ Only your default device was selected. Select additional devices to route audio to.";
+                    _captureService.Stop();
+                    _outputService.StopAll();
+                    PlaybackStatus = "Idle";
+                    return;
+                }
+                else if (addedCount == 0)
                 {
                     ErrorMessage = "⚠ Failed to initialize any output devices. Check device connections.";
                     Logger.Error("No devices could be initialized.");
@@ -405,11 +427,11 @@ namespace SyncWave.ViewModels
                 ActiveDeviceCount = addedCount;
                 _monitorTimer.Start();
 
-                Logger.Info($"✓ Sync started successfully with {addedCount} device(s).");
+                Logger.Info($"✓ Sync started successfully with {addedCount} device(s) ({skippedDefault} default skipped).");
 
-                if (addedCount < selectedDevices.Count)
+                if (addedCount < selectedDevices.Count - skippedDefault)
                 {
-                    ErrorMessage = $"⚠ {selectedDevices.Count - addedCount} device(s) failed to initialize.";
+                    ErrorMessage = $"⚠ {selectedDevices.Count - skippedDefault - addedCount} device(s) failed to initialize.";
                 }
             }
             catch (Exception ex)
