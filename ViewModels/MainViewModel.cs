@@ -21,7 +21,7 @@ namespace SyncWave.ViewModels
     public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         // ── Services ──────────────────────────────────────────────
-        private readonly AudioCaptureService _captureService;
+        private readonly ICaptureService _captureService;
         private readonly AudioOutputService _outputService;
         private readonly LatencyManager _latencyManager;
 
@@ -119,7 +119,7 @@ namespace SyncWave.ViewModels
         public MainViewModel()
         {
             _latencyManager = new LatencyManager();
-            _captureService = new AudioCaptureService();
+            _captureService = new ProcessLoopbackCaptureService();
             _outputService = new AudioOutputService(_latencyManager);
 
             // Wire events

@@ -9,7 +9,7 @@ namespace SyncWave.Core
     /// Captures system audio via WASAPI loopback (records what you hear).
     /// Raises DataAvailable events with timestamped PCM buffers.
     /// </summary>
-    public class AudioCaptureService : IDisposable
+    public class AudioCaptureService : ICaptureService
     {
         private WasapiLoopbackCapture? _capture;
         private bool _isCapturing;
@@ -97,7 +97,7 @@ namespace SyncWave.Core
         {
             if (e.BytesRecorded > 0)
             {
-                // Copy buffer to avoid NAudio overwriting it
+                // Copy buffer to avoid NAudio overwriting it before all devices process
                 var buffer = new byte[e.BytesRecorded];
                 Buffer.BlockCopy(e.Buffer, 0, buffer, 0, e.BytesRecorded);
                 DataAvailable?.Invoke(buffer, e.BytesRecorded);

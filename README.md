@@ -94,6 +94,7 @@ SyncWave/
 │   ├── AudioCaptureService.cs    # WASAPI loopback capture engine
 │   ├── AudioOutputService.cs     # Multi-device output manager
 │   ├── LatencyManager.cs         # Circular delay compensation buffers
+│   ├── TightBufferWaveProvider.cs # Near-zero latency ring buffer
 │   └── VolumeWaveProvider.cs     # Real-time volume scaling (read-time)
 ├── ViewModels/
 │   └── MainViewModel.cs          # MVVM ViewModel — pipeline orchestration
@@ -117,9 +118,9 @@ SyncWave/
 
 ### Audio Pipeline
 ```
-System Audio → WASAPI Loopback → Capture Buffer → Latency Delay → Volume Scale → WasapiOut → Device
-                                                     ↕ per-device      ↕ real-time
-                                                   (0–500ms)        (0–200%)
+System Audio → WASAPI Loopback → Tight Buffer → Latency Delay → Volume Scale → WasapiOut → Device
+                                  (≈0ms)          ↕ per-device      ↕ real-time
+                                                (0–500ms)        (0–200%)
 ```
 
 ### Latency Compensation Algorithm
@@ -147,7 +148,7 @@ The default render device (where system audio natively plays) is auto-detected a
 
 - **CPU**: Typically under 10%
 - **Latency**: ~100ms pipeline delay (WasapiOut timer mode)
-- **Buffer**: 5-second per-device buffer prevents dropout
+- **Buffer**: Near-zero latency tight buffer with adaptive discard (≤30ms target)
 - **GC-friendly**: Bulk `Buffer.BlockCopy` transfers, reusable output buffers
 - **Thread-safe**: Concurrent buffer writes with lock-free volume control
 
