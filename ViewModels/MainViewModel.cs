@@ -433,9 +433,38 @@ namespace SyncWave.ViewModels
             catch (Exception ex)
             {
                 Logger.Error("Failed to start sync", ex);
+
+                // Clean up any partially-initialized resources without wiping error state.
+                // Do NOT call StopSync() here — it unconditionally clears ErrorMessage
+                // and sets PlaybackStatus = "Idle", hiding the failure from the user.
+                try
+                {
+                    _monitorTimer.Stop();
+                    _captureService.Stop();
+                    _outputService.StopAll();
+
+                    foreach (var d in Devices)
+                    {
+                        d.IsActive = false;
+                        d.BufferHealth = 0;
+                        d.StatusText = "Ready";
+                        d.HasError = false;
+                    }
+
+                    IsSyncing = false;
+                    ActiveDeviceCount = 0;
+                    MaxLatencyDiff = 0;
+                    AudioLevel = 0;
+                }
+                catch (Exception cleanupEx)
+                {
+                    Logger.Error("Error during start-failure cleanup", cleanupEx);
+                    IsSyncing = false;
+                }
+
+                // Set error state AFTER cleanup so it's not overwritten
                 PlaybackStatus = "Error";
                 ErrorMessage = $"⚠ Start failed: {ex.Message}";
-                StopSync();
             }
         }
 

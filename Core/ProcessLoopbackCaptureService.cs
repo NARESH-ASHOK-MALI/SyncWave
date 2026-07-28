@@ -248,7 +248,23 @@ namespace SyncWave.Core
                             handler.HResult);
                     }
 
-                    _audioClient = (IAudioClient)handler.ActivatedInterface!;
+                    // The COM object returned by ActivateAudioInterfaceAsync doesn't
+                    // support direct C# cast to our privately-defined IAudioClient
+                    // (E_NOINTERFACE). Manually QueryInterface on the raw IUnknown
+                    // pointer to obtain the correct vtable pointer.
+                    IntPtr pUnk = Marshal.GetIUnknownForObject(handler.ActivatedInterface!);
+                    try
+                    {
+                        Guid iid = IID_IAudioClient;
+                        Marshal.ThrowExceptionForHR(
+                            Marshal.QueryInterface(pUnk, ref iid, out IntPtr pAudioClient));
+                        _audioClient = (IAudioClient)Marshal.GetObjectForIUnknown(pAudioClient);
+                        Marshal.Release(pAudioClient);
+                    }
+                    finally
+                    {
+                        Marshal.Release(pUnk);
+                    }
 
                     // Configure IEEE 32-bit Float 48kHz Stereo Format (matches NAudio & VolumeWaveProvider)
                     var nativeFormat = new WAVEFORMATEX
