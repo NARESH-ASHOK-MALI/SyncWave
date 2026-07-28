@@ -227,7 +227,7 @@ namespace SyncWave.ViewModels
                         {
                             DeviceId = ep.ID,
                             FriendlyName = ep.FriendlyName,
-                            DeviceType = isDefault ? "🔈 Source" : DetectDeviceType(ep),
+                            DeviceType = DetectDeviceType(ep),
                             IsDefaultDevice = isDefault
                         };
 
@@ -260,7 +260,7 @@ namespace SyncWave.ViewModels
                     if (d.IsDefaultDevice != isDefault)
                     {
                         d.IsDefaultDevice = isDefault;
-                        d.DeviceType = isDefault ? "🔈 Source" : DetectDeviceType(enumerator.GetDevice(d.DeviceId));
+                        d.DeviceType = DetectDeviceType(enumerator.GetDevice(d.DeviceId));
                     }
 
                     // Sync volume from Windows system only on manual refresh
@@ -377,19 +377,10 @@ namespace SyncWave.ViewModels
                 // Configure output service with capture format
                 _outputService.SetSourceFormat(_captureService.CaptureFormat);
 
-                // Add selected devices to output (skip default device — echo prevention)
+                // Add selected devices to output
                 int addedCount = 0;
-                int skippedDefault = 0;
                 foreach (var device in selectedDevices)
                 {
-                    if (device.IsDefaultDevice)
-                    {
-                        Logger.Info($"Skipping default device '{device.FriendlyName}' to prevent echo.");
-                        device.StatusText = "Source (no echo)";
-                        skippedDefault++;
-                        continue;
-                    }
-
                     _latencyManager.SetManualDelay(device.DeviceId, device.ManualDelay + MasterDelayOffset);
                     _outputService.SetDeviceVolume(device.DeviceId, (float)(device.Volume / 100.0));
                     _outputService.AddDevice(device);
@@ -416,18 +407,9 @@ namespace SyncWave.ViewModels
 
                 Logger.Info($"✓ Sync started successfully with {addedCount} device(s).");
 
-                if (addedCount < selectedDevices.Count - skippedDefault)
+                if (addedCount < selectedDevices.Count)
                 {
-                    ErrorMessage = $"⚠ {selectedDevices.Count - skippedDefault - addedCount} device(s) failed to initialize.";
-                }
-                else if (skippedDefault > 0 && addedCount == 0)
-                {
-                    ErrorMessage = "⚠ Only your source device was selected. Select additional devices to route audio to.";
-                    _captureService.Stop();
-                    _outputService.StopAll();
-                    IsSyncing = false;
-                    PlaybackStatus = "Idle";
-                    return;
+                    ErrorMessage = $"⚠ {selectedDevices.Count - addedCount} device(s) failed to initialize.";
                 }
             }
             catch (Exception ex)
