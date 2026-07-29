@@ -50,5 +50,18 @@ namespace SyncWave.Views
             base.OnActivated(e);
             UpdateNoDevicesText(); // Refresh when opened
         }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            if (App.IsShuttingDown)
+            {
+                base.OnClosing(e);
+                return;
+            }
+
+            e.Cancel = true;
+            this.Hide();
+            base.OnClosing(e);
+        }
     }
 }

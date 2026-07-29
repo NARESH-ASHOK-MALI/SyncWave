@@ -177,18 +177,26 @@ namespace SyncWave.Views
 
         private void TrayIcon_TrayLeftMouseUp(object sender, RoutedEventArgs e)
         {
-            if (_flyout == null)
+            try
             {
-                _flyout = new FlyoutWindow((MainViewModel)this.DataContext);
-                _flyout.WindowStartupLocation = WindowStartupLocation.Manual;
-                _flyout.SizeChanged += (s, ev) => PositionFlyout();
+                if (_flyout == null)
+                {
+                    _flyout = new FlyoutWindow((MainViewModel)this.DataContext);
+                    _flyout.WindowStartupLocation = WindowStartupLocation.Manual;
+                    _flyout.SizeChanged += (s, ev) => PositionFlyout();
+                }
+                
+                _flyout.UpdateNoDevicesText();
+                PositionFlyout();
+                
+                _flyout.Show();
+                _flyout.Activate();
             }
-            
-            _flyout.UpdateNoDevicesText();
-            PositionFlyout();
-            
-            _flyout.Show();
-            _flyout.Activate();
+            catch (Exception ex)
+            {
+                SyncWave.Utils.Logger.Error("Exception in TrayLeftMouseUp", ex);
+                System.Windows.MessageBox.Show(ex.ToString(), "Flyout Crash");
+            }
         }
 
         protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)

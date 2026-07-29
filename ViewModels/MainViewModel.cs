@@ -110,6 +110,39 @@ namespace SyncWave.ViewModels
             set { _audioLevel = Math.Clamp(value, 0, 1); OnPropertyChanged(); }
         }
 
+        private static string BoostPrefFile => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SyncWave", "boost_pref.txt");
+
+        public bool IsAudioBoostEnabled
+        {
+            get => MaxVolumeLimit == 200;
+            set
+            {
+                MaxVolumeLimit = value ? 200 : 125;
+                OnPropertyChanged();
+                try { System.IO.File.WriteAllText(BoostPrefFile, value.ToString()); } catch { }
+            }
+        }
+
+        private int _maxVolumeLimit = 125;
+        public int MaxVolumeLimit
+        {
+            get => _maxVolumeLimit;
+            set
+            {
+                _maxVolumeLimit = value;
+                OnPropertyChanged();
+                
+                // Clamp existing devices if they exceed the new maximum
+                foreach (var device in Devices)
+                {
+                    if (device.Volume > _maxVolumeLimit)
+                    {
+                        device.Volume = _maxVolumeLimit;
+                    }
+                }
+            }
+        }
+
         // ── Commands ──────────────────────────────────────────────
         public ICommand StartSyncCommand { get; }
         public ICommand StopSyncCommand { get; }
@@ -149,6 +182,15 @@ namespace SyncWave.ViewModels
 
             // Load saved profiles before device enumeration
             _savedProfiles = DeviceProfileManager.Load();
+
+            try 
+            { 
+                if (System.IO.File.Exists(BoostPrefFile) && bool.TryParse(System.IO.File.ReadAllText(BoostPrefFile), out bool b))
+                {
+                    _maxVolumeLimit = b ? 200 : 125;
+                }
+            } 
+            catch { }
 
             // Initial device enumeration
             RefreshDevices(syncVolume: true);
