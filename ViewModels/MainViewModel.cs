@@ -298,9 +298,31 @@ namespace SyncWave.ViewModels
         {
             try
             {
+                // Primary detection: check the device's enumerator/bus type via PropertyStore.
+                // This is the most reliable method — Windows knows the actual transport.
+                try
+                {
+                    var props = device.Properties;
+                    // PKEY_Device_EnumeratorName = {a45c254e-df1c-4efd-8020-67d146a850e0}, 24
+                    var enumeratorKey = new NAudio.CoreAudioApi.PropertyKey(
+                        new Guid("a45c254e-df1c-4efd-8020-67d146a850e0"), 24);
+                    if (props.Contains(enumeratorKey))
+                    {
+                        var enumeratorName = props[enumeratorKey].Value?.ToString()?.ToUpperInvariant() ?? "";
+                        if (enumeratorName.Contains("BTHENUM") || enumeratorName.Contains("BTHHFENUM"))
+                            return "Bluetooth";
+                    }
+
+                    // PKEY_Device_ContainerId or interface path can also hint at Bluetooth
+                    var devicePath = device.ID?.ToLowerInvariant() ?? "";
+                    if (devicePath.Contains("bthenum") || devicePath.Contains("bth"))
+                        return "Bluetooth";
+                }
+                catch { }
+
+                // Secondary detection: keyword matching on friendly names
                 var name = device.FriendlyName.ToLowerInvariant();
 
-                // Check multiple Bluetooth indicators
                 string[] btKeywords = {
                     "bluetooth", "bt ", "bt-",
                     "airpods", "galaxy buds", "buds pro", "buds live",
@@ -318,7 +340,7 @@ namespace SyncWave.ViewModels
                         return "Bluetooth";
                 }
 
-                // Also check the device's friendly name (adapter level)
+                // Also check the device's adapter-level friendly name
                 try
                 {
                     var deviceName = device.DeviceFriendlyName?.ToLowerInvariant() ?? "";
