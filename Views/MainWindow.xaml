@@ -381,8 +381,18 @@
                                         <!-- Device name + toggle row -->
                                         <DockPanel>
                                             <CheckBox DockPanel.Dock="Left" IsChecked="{Binding IsSelected}"
-                                                      VerticalAlignment="Center" Margin="0,0,10,0"
-                                                      Style="{StaticResource ToggleSwitch}" />
+                                                      VerticalAlignment="Center" Margin="0,0,10,0">
+                                                <CheckBox.Style>
+                                                    <Style TargetType="CheckBox" BasedOn="{StaticResource ToggleSwitch}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsDefaultDevice}" Value="True">
+                                                                <Setter Property="Visibility" Value="Hidden" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </CheckBox.Style>
+                                            </CheckBox>
                                             <Border DockPanel.Dock="Right" CornerRadius="4" Padding="7,2"
                                                     VerticalAlignment="Center" Background="#141414"
                                                     BorderThickness="1" BorderBrush="#1E1E1E">
@@ -399,6 +409,16 @@
                                         <DockPanel Margin="48,4,0,0">
                                             <TextBlock FontSize="10" VerticalAlignment="Center"
                                                        Foreground="{StaticResource TextSecondaryBrush}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsDefaultDevice}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
                                                 <Run Text="Latency:" />
                                                 <Run Text="{Binding MeasuredLatency, StringFormat='{}{0:F0}ms', Mode=OneWay}" 
                                                      Foreground="{StaticResource AccentPrimaryBrush}" />
@@ -475,26 +495,22 @@
                                             </DockPanel>
                                         </StackPanel>
 
-                                        <!-- Default device info (visible when selected AND is the default device) -->
-                                        <Border Margin="48,8,0,0" Padding="10,8" CornerRadius="6"
+                                        <!-- Default device info (visible when is the default device) -->
+                                        <Border Margin="48,4,0,0" Padding="10,8" CornerRadius="6"
                                                 Background="#0A0A0A" BorderThickness="1" BorderBrush="#1A1A1A">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                     <Style.Triggers>
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding IsSelected}" Value="True" />
-                                                                <Condition Binding="{Binding IsDefaultDevice}" Value="True" />
-                                                            </MultiDataTrigger.Conditions>
+                                                        <DataTrigger Binding="{Binding IsDefaultDevice}" Value="True">
                                                             <Setter Property="Visibility" Value="Visible" />
-                                                        </MultiDataTrigger>
+                                                        </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
                                             <TextBlock FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
                                                        FontStyle="Italic">
-                                                Use Windows volume slider to adjust.
+                                                Always on — volume controlled via Windows.
                                             </TextBlock>
                                         </Border>
                                     </StackPanel>
