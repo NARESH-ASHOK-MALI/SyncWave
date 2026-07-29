@@ -625,8 +625,35 @@ namespace SyncWave.ViewModels
 
                 if (e.PropertyName == nameof(AudioDeviceModel.IsSelected))
                 {
-                    var anySelected = Devices.Any(d => d.IsSelected);
-                    Logger.Info($"Device '{device.FriendlyName}' IsSelected={device.IsSelected}. Any selected: {anySelected}");
+                    var anySelected = Devices.Any(d => d.IsSelected && !d.IsDefaultDevice);
+                    Logger.Info($"Device '{device.FriendlyName}' IsSelected={device.IsSelected}. Any non-default selected: {anySelected}");
+
+                    if (IsSyncing && !device.IsDefaultDevice)
+                    {
+                        if (device.IsSelected)
+                        {
+                            // Hot-plug device back into active stream
+                            _latencyManager.SetManualDelay(device.DeviceId, device.ManualDelay + MasterDelayOffset);
+                            _outputService.SetDeviceVolume(device.DeviceId, (float)(device.Volume / 100.0));
+                            _outputService.AddDevice(device);
+                        }
+                        else
+                        {
+                            // Hot-unplug device from active stream immediately
+                            _outputService.RemoveDevice(device.DeviceId);
+                            device.IsActive = false;
+                            device.BufferHealth = 0;
+                            device.StatusText = "Ready";
+                            device.HasError = false;
+
+                            if (!anySelected)
+                            {
+                                Logger.Info("All secondary devices were deselected during playback. Halting sync.");
+                                StopSync();
+                            }
+                        }
+                    }
+
                     RelayCommand.RaiseCanExecuteChanged();
                 }
             }
