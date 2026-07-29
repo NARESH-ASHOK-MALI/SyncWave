@@ -22,10 +22,13 @@
 
   <ItemGroup>
     <Resource Include="Assets\logo.png" />
+    <Resource Include="Assets\logo.ico" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.4.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="wpf-ui" Version="4.3.0" />
   </ItemGroup>
 
 </Project>

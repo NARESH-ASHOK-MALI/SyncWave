@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using SyncWave.Utils;
 
 namespace SyncWave
@@ -8,6 +8,8 @@ namespace SyncWave
     /// </summary>
     public partial class App : Application
     {
+        public static bool IsShuttingDown = false;
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
