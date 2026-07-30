@@ -27,6 +27,8 @@ namespace SyncWave.Core
         /// <summary>The active capture wave format (set after Start).</summary>
         public WaveFormat? CaptureFormat => _capture?.WaveFormat;
 
+        public bool IsHighPerformanceModeEnabled { get; set; }
+
         /// <summary>
         /// Starts WASAPI loopback capture on the default render device.
         /// </summary>

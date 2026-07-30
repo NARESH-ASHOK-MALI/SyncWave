@@ -180,6 +180,7 @@ namespace SyncWave.Core
 
         private const uint AUDCLNT_STREAMFLAGS_LOOPBACK = 0x00020000;
         private const uint AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM = 0x80000000;
+        private const uint AUDCLNT_STREAMFLAGS_EVENTCALLBACK = 0x00040000;
 
         /// <summary>Fired when new audio data is captured. Provides buffer + byte count.</summary>
         public event Action<byte[], int>? DataAvailable;
@@ -191,7 +192,11 @@ namespace SyncWave.Core
         public bool IsCapturing => _isCapturing;
 
         /// <summary>The active capture wave format (set after Start).</summary>
+        /// <summary>The active capture wave format (set after Start).</summary>
         public WaveFormat? CaptureFormat => _captureFormat;
+
+        public bool IsHighPerformanceModeEnabled { get; set; }
+        private EventWaitHandle? _eventWaitHandle;
 
         /// <summary>
         /// Starts Windows Process Loopback capture, excluding SyncWave's own process tree.
@@ -302,10 +307,23 @@ namespace SyncWave.Core
                             {
                                 Marshal.StructureToPtr(nativeFormat, pFmt, false);
                                 uint streamFlags = AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
+                                if (IsHighPerformanceModeEnabled)
+                                {
+                                    streamFlags |= AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
+                                }
+
                                 Logger.Info($"[Interop] Calling IAudioClient.Initialize(shareMode=0, flags=0x{streamFlags:X8})...");
                                 int hrInit = _audioClient.Initialize(0, streamFlags, 0, 0, pFmt, IntPtr.Zero);
                                 Logger.Info($"[Interop] IAudioClient.Initialize returned HR=0x{hrInit:X8}");
                                 Marshal.ThrowExceptionForHR(hrInit);
+
+                                if (IsHighPerformanceModeEnabled)
+                                {
+                                    _eventWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
+                                    int hrEvent = _audioClient.SetEventHandle(_eventWaitHandle.SafeWaitHandle.DangerousGetHandle());
+                                    Logger.Info($"[Interop] IAudioClient.SetEventHandle returned HR=0x{hrEvent:X8}");
+                                    Marshal.ThrowExceptionForHR(hrEvent);
+                                }
                             }
                             finally
                             {
@@ -389,8 +407,20 @@ namespace SyncWave.Core
 
         private void CaptureLoop()
         {
+            WaitHandle[]? waitHandles = null;
+            if (IsHighPerformanceModeEnabled && _eventWaitHandle != null)
+            {
+                waitHandles = new WaitHandle[] { _eventWaitHandle };
+            }
+
             while (_isCapturing && _captureClient != null)
             {
+                if (IsHighPerformanceModeEnabled && waitHandles != null)
+                {
+                    WaitHandle.WaitAny(waitHandles, 100);
+                    if (!_isCapturing) break;
+                }
+
                 try
                 {
                     while (_isCapturing)
@@ -438,7 +468,10 @@ namespace SyncWave.Core
                     }
                 }
 
-                Thread.Sleep(5);
+                if (!IsHighPerformanceModeEnabled)
+                {
+                    Thread.Sleep(5);
+                }
             }
         }
 
@@ -506,6 +539,12 @@ namespace SyncWave.Core
             {
                 try { Marshal.ReleaseComObject(_audioClient); } catch { }
                 _audioClient = null;
+            }
+
+            if (_eventWaitHandle != null)
+            {
+                try { _eventWaitHandle.Dispose(); } catch { }
+                _eventWaitHandle = null;
             }
 
             _captureFormat = null;

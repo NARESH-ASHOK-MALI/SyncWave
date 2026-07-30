@@ -22,6 +22,9 @@ namespace SyncWave.Core
         /// <summary>The active capture wave format (set after Start).</summary>
         WaveFormat? CaptureFormat { get; }
 
+        /// <summary>Whether high performance (event-driven) mode is enabled.</summary>
+        bool IsHighPerformanceModeEnabled { get; set; }
+
         /// <summary>Starts audio capture.</summary>
         void Start();
 

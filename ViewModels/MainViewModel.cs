@@ -111,6 +111,7 @@ namespace SyncWave.ViewModels
         }
 
         private static string BoostPrefFile => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SyncWave", "boost_pref.txt");
+        private static string PerfPrefFile => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SyncWave", "perf_pref.txt");
 
         public bool IsAudioBoostEnabled
         {
@@ -140,6 +141,18 @@ namespace SyncWave.ViewModels
                         device.Volume = _maxVolumeLimit;
                     }
                 }
+            }
+        }
+
+        private bool _isHighPerformanceModeEnabled;
+        public bool IsHighPerformanceModeEnabled
+        {
+            get => _isHighPerformanceModeEnabled;
+            set
+            {
+                _isHighPerformanceModeEnabled = value;
+                OnPropertyChanged();
+                try { System.IO.File.WriteAllText(PerfPrefFile, value.ToString()); } catch { }
             }
         }
 
@@ -188,6 +201,11 @@ namespace SyncWave.ViewModels
                 if (System.IO.File.Exists(BoostPrefFile) && bool.TryParse(System.IO.File.ReadAllText(BoostPrefFile), out bool b))
                 {
                     _maxVolumeLimit = b ? 200 : 125;
+                }
+
+                if (System.IO.File.Exists(PerfPrefFile) && bool.TryParse(System.IO.File.ReadAllText(PerfPrefFile), out bool p))
+                {
+                    _isHighPerformanceModeEnabled = p;
                 }
             } 
             catch { }
@@ -429,6 +447,7 @@ namespace SyncWave.ViewModels
                 Logger.Info($"Starting sync with {syncTargets.Count} device(s)...");
 
                 // Start WASAPI loopback capture
+                _captureService.IsHighPerformanceModeEnabled = IsHighPerformanceModeEnabled;
                 _captureService.Start();
 
                 if (_captureService.CaptureFormat == null)
@@ -442,8 +461,9 @@ namespace SyncWave.ViewModels
 
                 Logger.Info($"Capture format: {_captureService.CaptureFormat}");
 
-                // Configure output service with capture format
+                // Configure output service with capture format and perf mode
                 _outputService.SetSourceFormat(_captureService.CaptureFormat);
+                _outputService.IsHighPerformanceModeEnabled = IsHighPerformanceModeEnabled;
 
                 // Add selected devices to output.
                 int addedCount = 0;

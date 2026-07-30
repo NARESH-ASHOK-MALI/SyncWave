@@ -80,6 +80,8 @@ namespace SyncWave.Core
             _latencyManager = latencyManager;
         }
 
+        public bool IsHighPerformanceModeEnabled { get; set; }
+
         /// <summary>
         /// Sets the source audio format. Must be called before adding devices.
         /// </summary>
@@ -95,8 +97,11 @@ namespace SyncWave.Core
         /// Determines the optimal latency for a device based on its connection type.
         /// Bluetooth devices need higher latency to avoid underruns.
         /// </summary>
-        private static int GetDesiredLatency(string deviceType)
+        private int GetDesiredLatency(string deviceType)
         {
+            if (IsHighPerformanceModeEnabled)
+                return 15;
+
             return deviceType.ToLowerInvariant() switch
             {
                 "bluetooth" => 80,  // BT needs more buffer headroom
@@ -170,10 +175,13 @@ namespace SyncWave.Core
                     stream.Player.Init(stream.VolumeProvider);
 
                     // Pre-fill with silence matching the desired latency to prevent underruns
-                    int prefillBytes = _sourceFormat.AverageBytesPerSecond * desiredLatencyMs / 1000;
-                    prefillBytes = (prefillBytes / _sourceFormat.BlockAlign) * _sourceFormat.BlockAlign;
-                    var silence = new byte[prefillBytes];
-                    stream.Buffer.AddSamples(silence, 0, silence.Length);
+                    if (!IsHighPerformanceModeEnabled)
+                    {
+                        int prefillBytes = _sourceFormat.AverageBytesPerSecond * desiredLatencyMs / 1000;
+                        prefillBytes = (prefillBytes / _sourceFormat.BlockAlign) * _sourceFormat.BlockAlign;
+                        var silence = new byte[prefillBytes];
+                        stream.Buffer.AddSamples(silence, 0, silence.Length);
+                    }
 
                     Logger.Info($"WasapiOut initialized for {device.FriendlyName}, " +
                                 $"mode: event-driven, latency: {desiredLatencyMs}ms, " +

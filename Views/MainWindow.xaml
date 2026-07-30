@@ -232,6 +232,11 @@
                                              Margin="0,0,0,8" VerticalAlignment="Center" />
                             <TextBlock Text="Allows individual devices to exceed 125% volume. Warning: may cause audio distortion." 
                                        FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" />
+
+                            <ui:ToggleSwitch IsChecked="{Binding IsHighPerformanceModeEnabled}" Content="High Performance Mode (requires strong CPU)" 
+                                             Margin="0,16,0,8" VerticalAlignment="Center" />
+                            <TextBlock Text="Reduces WASAPI buffer to ~15ms. Takes effect on next Start Sync. Warning: may cause audio crackling on weaker systems." 
+                                       FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" />
                         </StackPanel>
                     </Border>
                 </Popup>
