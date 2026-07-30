@@ -264,7 +264,10 @@
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" 
                            Margin="0,12,0,0">
                     <Run Text="Note: " FontWeight="Medium"/>
-                    Hardware latency varies between devices (e.g., Bluetooth vs. Wired). If your devices are out of sync, find the device that plays sound first and increase its Delay until it perfectly matches the slower device.
+                    Hardware latency varies. If devices are out of sync, find the device that plays first and increase its Delay to match the slower device.
+                    <LineBreak/>
+                    <Run Text="Tip: " FontWeight="Medium"/>
+                    This only works when the naturally-fastest device is a secondary device. Since only secondary devices can be delayed, you should set your naturally-slowest device (e.g. Bluetooth) as your Windows default playback device (Source), and keep faster devices as secondary.
                 </TextBlock>
 
                 <!-- Device List -->
