@@ -239,7 +239,7 @@
         </Border>
 
         <!-- ═══════════ LEFT PANEL — Device Selection ═══════════ -->
-        <!-- ═══════════ LEFT PANEL — Device Selection ═══════════ -->
+
         <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardBorder}">
             <DockPanel>
                 <!-- Panel Header -->
