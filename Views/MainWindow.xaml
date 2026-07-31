@@ -548,12 +548,12 @@
         <!-- ═══════════ FOOTER ═══════════ -->
         <Border Grid.Row="2" Grid.ColumnSpan="2" Margin="0,8,0,0" Padding="10,5">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Right" Text="v1.1.0" FontSize="9"
+                <TextBlock DockPanel.Dock="Right" Text="{Binding AppVersion}" FontSize="9"
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Opacity="0.5" />
                 <TextBlock FontSize="9" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"
                            Opacity="0.5">
                     <Run Text="SyncWave" FontWeight="Medium" />
-                    <Run Text=" — System audio routed via WASAPI loopback. No kernel drivers required." />
+                    <Run Text=" — System audio routed via Windows Process Loopback Capture. No kernel drivers required." />
                 </TextBlock>
             </DockPanel>
         </Border>

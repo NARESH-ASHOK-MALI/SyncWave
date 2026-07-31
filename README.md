@@ -10,9 +10,10 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Version-2.0.0-blue" alt="Version 2.0.0" />
   <img src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet" alt=".NET 8" />
   <img src="https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows" alt="Windows" />
-  <img src="https://img.shields.io/badge/Audio-WASAPI-FF6B00" alt="WASAPI" />
+  <img src="https://img.shields.io/badge/Audio-Process%20Loopback-FF6B00" alt="Process Loopback Capture" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License" />
 </p>
 
@@ -37,13 +38,16 @@
 | Feature | Description |
 |---|---|
 | 🔊 **Multi-Device Output** | Stream to unlimited audio devices in parallel |
+| 🔈 **Independent Volume** | Per-device volume is fully independent — no device's volume can affect any other's |
 | 🎯 **Latency Compensation** | Auto-syncs faster devices to the slowest; per-device manual delay (0–500ms) |
-| 🔈 **Real-Time Volume** | Per-device volume (0–200%) with instant adjustment — no buffer delay |
+| ⚡ **Performance Mode** | Optional "High Performance Mode" for reduced latency (trades CPU efficiency for ~15ms buffers) |
 | 📊 **Live Monitoring** | Waveform visualization, buffer health bars, latency readouts |
 | 🔄 **Auto-Reconnect** | Graceful Bluetooth disconnect handling with reconnection polling |
 | 🚫 **Echo Prevention** | Auto-detects source device and skips it to prevent audio doubling |
 | 💾 **Profile Persistence** | Auto-saves device selection, volume, and delay settings |
-| 🎨 **Dark Theme UI** | Modern WPF interface with cyan-purple gradient accents |
+| 🎨 **Windows 11 Native UI** | Acrylic/Mica backdrop, auto light/dark theme, and a system tray quick-volume flyout |
+
+> **Note:** Screenshots may not yet reflect the new Windows 11 Native UI.
 
 ## 🏗 Tech Stack
 
@@ -52,7 +56,7 @@
 | Runtime | .NET 8 (C#) |
 | UI Framework | WPF (XAML) |
 | Audio Library | NAudio 2.2.1 |
-| Audio API | Windows Core Audio (WASAPI) |
+| Audio API | Windows Process Loopback Capture |
 | Architecture | MVVM |
 
 ## 📋 Prerequisites
@@ -91,10 +95,11 @@ SyncWave/
 ├── Assets/
 │   └── logo.png                  # App icon
 ├── Core/
-│   ├── AudioCaptureService.cs    # WASAPI loopback capture engine
+│   ├── AudioCaptureService.cs    # Legacy WASAPI loopback capture engine
 │   ├── AudioOutputService.cs     # Multi-device output manager
+│   ├── ICaptureService.cs        # Capture service interface
 │   ├── LatencyManager.cs         # Circular delay compensation buffers
-│   ├── TightBufferWaveProvider.cs # Near-zero latency ring buffer
+│   ├── ProcessLoopbackCaptureService.cs # Windows Process Loopback capture engine
 │   └── VolumeWaveProvider.cs     # Real-time volume scaling (read-time)
 ├── ViewModels/
 │   └── MainViewModel.cs          # MVVM ViewModel — pipeline orchestration
@@ -118,9 +123,9 @@ SyncWave/
 
 ### Audio Pipeline
 ```
-System Audio → WASAPI Loopback → Tight Buffer → Latency Delay → Volume Scale → WasapiOut → Device
-                                  (≈0ms)          ↕ per-device      ↕ real-time
-                                                (0–500ms)        (0–200%)
+System Audio → Process Loopback Capture → Latency Delay → Volume Scale → WasapiOut → Device
+                                  (≈15-30ms)      ↕ per-device      ↕ independent
+                                                (0–500ms)        (0–125/200%)
 ```
 
 ### Latency Compensation Algorithm
