@@ -24,65 +24,59 @@ export default function FeedbackForm() {
   }
 
   return (
-    <section className="py-24 px-6 max-w-5xl mx-auto border-t border-white/5">
-      <div className="grid md:grid-cols-2 gap-16">
-        <div>
-          <h2 className="font-display text-3xl mb-4 font-bold tracking-tight text-white">Have feedback?</h2>
-          <p className="text-text-muted mb-8">What would you like SyncWave to do next? Have an issue or suggestion? Let me know!</p>
+    <section className="py-32 px-6 max-w-4xl mx-auto relative z-10">
+      <div className="bg-surface/50 backdrop-blur-xl border border-surface-border rounded-3xl p-10 md:p-16 shadow-glass relative overflow-hidden">
+        
+        {/* Decorative corner glows */}
+        <div className="absolute top-0 left-0 w-32 h-32 bg-accent-cyan/10 blur-[50px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-accent-purple/10 blur-[50px] rounded-full pointer-events-none" />
+
+        <div className="text-center mb-12 relative z-10">
+          <h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-white mb-4">
+            Feature Request & Feedback
+          </h2>
+          <p className="text-text-muted text-lg">Help shape the future of SyncWave. Send your thoughts directly.</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6 relative z-10">
+          <input type="hidden" name="subject" value="SyncWave Feedback" />
           
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <input type="hidden" name="subject" value="SyncWave feedback" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <input
+              name="name"
+              type="text"
+              required
+              placeholder="Name"
+              className="w-full bg-bg-base/50 text-white px-5 py-4 rounded-xl border border-transparent outline-none transition-all duration-300 focus:bg-bg-base focus:border-accent-cyan focus:shadow-neon-cyan placeholder-text-muted/50"
+            />
             <input
               name="email"
               type="email"
-              placeholder="Your email (optional)"
-              className="bg-surface rounded-lg px-4 py-3 border border-white/10 focus:outline-none focus:border-accent-main text-white"
-            />
-            <textarea
-              name="message"
               required
-              placeholder="Your feedback..."
-              rows={5}
-              className="bg-surface rounded-lg px-4 py-3 border border-white/10 focus:outline-none focus:border-accent-main text-white"
+              placeholder="Email"
+              className="w-full bg-bg-base/50 text-white px-5 py-4 rounded-xl border border-transparent outline-none transition-all duration-300 focus:bg-bg-base focus:border-accent-cyan focus:shadow-neon-cyan placeholder-text-muted/50"
             />
-            <button
-              type="submit"
-              disabled={status === 'sending'}
-              className="bg-accent-sec text-white font-medium rounded-lg py-3 hover:opacity-90 transition disabled:opacity-50"
-            >
-              {status === 'sending' ? 'Sending…' : 'Send feedback'}
-            </button>
-            {status === 'sent' && <p className="text-accent-main">Thanks — got it.</p>}
-            {status === 'error' && <p className="text-red-400">Something went wrong, try again.</p>}
-          </form>
-        </div>
-        
-        <div>
-          <h3 className="font-display text-xl mb-4 font-bold text-white">Roadmap</h3>
-          <ul className="space-y-4 text-text-muted">
-            <li className="flex gap-3">
-              <span className="text-accent-main">✓</span> High Performance Mode
-            </li>
-            <li className="flex gap-3">
-              <span className="text-accent-main">✓</span> Independent Device Volume
-            </li>
-            <li className="flex gap-3">
-              <span className="text-accent-main">✓</span> System Tray Controls
-            </li>
-            <li className="flex gap-3">
-              <span className="opacity-50">○</span> Virtual Audio Cable Support
-            </li>
-            <li className="flex gap-3">
-              <span className="opacity-50">○</span> Advanced EQ per Device
-            </li>
-          </ul>
-          
-          <div className="mt-8 pt-8 border-t border-white/5">
-            <p className="text-sm text-text-muted">
-              Or report a bug directly on <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/issues/new" className="text-accent-main hover:underline" target="_blank" rel="noreferrer">GitHub Issues</a>.
-            </p>
           </div>
-        </div>
+          
+          <textarea
+            name="message"
+            required
+            placeholder="Your Suggestion..."
+            rows={5}
+            className="w-full bg-bg-base/50 text-white px-5 py-4 rounded-xl border border-transparent outline-none transition-all duration-300 focus:bg-bg-base focus:border-accent-cyan focus:shadow-neon-cyan placeholder-text-muted/50 resize-none"
+          />
+          
+          <button
+            type="submit"
+            disabled={status === 'sending'}
+            className="mt-4 self-center bg-transparent border-2 border-accent-purple text-accent-purple font-bold px-12 py-4 rounded-full shadow-neon-purple hover:bg-accent-purple hover:text-white transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:bg-transparent disabled:hover:text-accent-purple"
+          >
+            {status === 'sending' ? 'SENDING...' : 'SEND TO DEVELOPER'}
+          </button>
+          
+          {status === 'sent' && <p className="text-accent-cyan text-center font-medium mt-4">Thank you! Your feedback has been sent.</p>}
+          {status === 'error' && <p className="text-red-400 text-center font-medium mt-4">Something went wrong. Please try again.</p>}
+        </form>
       </div>
     </section>
   )
