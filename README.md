@@ -151,9 +151,9 @@ The default render device (where system audio natively plays) is auto-detected a
 
 ## ⚡ Performance
 
-- **CPU**: Typically under 10%
-- **Latency**: ~100ms pipeline delay (WasapiOut timer mode)
-- **Buffer**: Near-zero latency tight buffer with adaptive discard (≤30ms target)
+- **CPU**: Typically under 10% (slightly higher in High Performance Mode)
+- **Latency**: ~30ms default pipeline delay. Enabling **High Performance Mode** reduces total latency to ~15-20ms via event-driven capture.
+- **Buffer**: Uses NAudio `BufferedWaveProvider` with overflow discard.
 - **GC-friendly**: Bulk `Buffer.BlockCopy` transfers, reusable output buffers
 - **Thread-safe**: Concurrent buffer writes with lock-free volume control
 
