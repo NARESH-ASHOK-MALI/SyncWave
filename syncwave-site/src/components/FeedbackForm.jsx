@@ -9,7 +9,7 @@ export default function FeedbackForm() {
     const formData = new FormData(e.target)
     
     // Replace with your Web3Forms access key
-    formData.append('access_key', 'YOUR_WEB3FORMS_KEY')
+    formData.append('access_key', 'bb09276a-5dfd-4898-837f-c5cfc7f62a70')
 
     try {
       const res = await fetch('https://api.web3forms.com/submit', {
