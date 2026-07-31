@@ -1,46 +1,79 @@
+import { useEffect, useRef, useState } from 'react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const STEPS = [
+  { img: 'Step1_LocateDownloadedexefile.jpg', caption: 'Locate the downloaded .exe and run it. No installation required.' },
+  { img: 'Addtobackground.jpg', caption: 'Add SyncWave to the background — it runs quietly in the system tray.' },
+  { img: 'ConnectAllDevices.jpg', caption: 'Connect all your audio devices at once.' },
+  { img: 'ToggleSecondaryDevicesYouWantToPlay.jpg', caption: 'Toggle the secondary devices you want audio sent to.' },
+  { img: 'ManageVolumeofsecondaryAudiodeviceFromSystemTray.jpg', caption: 'Manage volume per secondary device independently from the tray flyout.' },
+  { img: 'AdvanceMenu.jpg', caption: 'Fine-tune latency and buffering in the Advanced menu.' },
+  { img: 'Playing.jpg', caption: 'Play anything — it streams to every connected device seamlessly.' },
+  { img: 'LowCPUConsumptionTaskManager.jpg', caption: 'Runs extremely light — barely visible in Task Manager.' },
+  { img: 'ExitOrOpenFromSystemTray.jpg', caption: 'Open or exit anytime directly from the system tray.' },
+]
+
 export default function Walkthrough() {
-  const screenshots = [
-    { src: 'Step1_LocateDownloadedexefile.jpg', alt: 'Download and run without installation', span: 'md:col-span-2 md:row-span-1' },
-    { src: 'ConnectAllDevices.jpg', alt: 'Connect all devices instantly', span: 'md:col-span-1 md:row-span-1' },
-    { src: 'ToggleSecondaryDevicesYouWantToPlay.jpg', alt: 'Toggle any secondary device', span: 'md:col-span-1 md:row-span-2' },
-    { src: 'ManageVolumeofsecondaryAudiodeviceFromSystemTray.jpg', alt: 'Manage volume directly from the system tray', span: 'md:col-span-1 md:row-span-1' },
-    { src: 'Playing.jpg', alt: 'Play audio across all outputs', span: 'md:col-span-1 md:row-span-1' },
-    { src: 'AdvanceMenu.jpg', alt: 'Advanced settings for perfect sync', span: 'md:col-span-2 md:row-span-1' },
-    { src: 'ExitOrOpenFromSystemTray.jpg', alt: 'Minimize to tray', span: 'md:col-span-1 md:row-span-1' },
-    { src: 'Addtobackground.jpg', alt: 'Runs quietly in the background', span: 'md:col-span-1 md:row-span-1' },
-    { src: 'LowCPUConsumptionTaskManager.jpg', alt: 'Ultra low CPU footprint', span: 'md:col-span-1 md:row-span-1' },
-  ]
+  const containerRef = useRef()
+  const [activeStep, setActiveStep] = useState(0)
+
+  useEffect(() => {
+    // Clean up any old ScrollTriggers from HMR
+    ScrollTrigger.getAll().forEach(t => t.kill());
+
+    const steps = gsap.utils.toArray('.step-text')
+    
+    steps.forEach((step, i) => {
+      ScrollTrigger.create({
+        trigger: step,
+        start: 'top 60%',
+        end: 'bottom 60%',
+        onToggle: self => {
+          if (self.isActive) {
+            setActiveStep(i)
+          }
+        }
+      })
+    })
+    
+    return () => {
+      ScrollTrigger.getAll().forEach(t => t.kill());
+    }
+  }, [])
 
   return (
-    <section className="py-24 px-6 max-w-6xl mx-auto relative z-10">
-      <div className="text-center mb-16">
-        <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
-          Experience <span className="text-accent-purple" style={{ textShadow: '0 0 20px rgba(123,44,191,0.5)' }}>SyncWave</span>
-        </h2>
-        <p className="text-text-muted text-lg">A frictionless interface for controlling complex audio pipelines.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 auto-rows-[250px] gap-6">
-        {screenshots.map((s, i) => (
-          <div 
-            key={i} 
-            className={`group relative rounded-2xl overflow-hidden border border-surface-border bg-surface backdrop-blur-md transition-all duration-500 hover:border-accent-cyan hover:shadow-neon-cyan ${s.span}`}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-bg-base/90 via-bg-base/20 to-transparent z-10 opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
-            
-            <img
-              src={`./screenshots/${s.src}`}
-              alt={s.alt}
-              className="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
-            />
-            
-            <div className="absolute bottom-0 left-0 p-6 z-20 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-              <p className="text-white font-medium text-lg shadow-sm drop-shadow-md">
-                {s.alt}
-              </p>
+    <section ref={containerRef} className="py-24 px-6 max-w-6xl mx-auto">
+      <h2 className="font-display text-4xl mb-12 text-center tracking-tight text-white">How it works</h2>
+      
+      <div className="flex flex-col md:flex-row gap-16 relative items-start">
+        {/* Left side: scrolling text */}
+        <div className="w-full md:w-5/12 pb-[30vh]">
+          {STEPS.map((s, i) => (
+            <div 
+              key={i} 
+              className={`step-text min-h-[40vh] flex flex-col justify-center transition-opacity duration-500 ${activeStep === i ? 'opacity-100' : 'opacity-20'}`}
+            >
+              <span className="font-mono text-xl text-accent-main mb-4 block">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <p className="text-text-main text-2xl font-medium leading-relaxed">{s.caption}</p>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        {/* Right side: sticky image container */}
+        <div className="w-full md:w-7/12 sticky top-[20vh] h-[55vh] rounded-2xl border border-white/10 overflow-hidden shadow-2xl bg-surface">
+          {STEPS.map((s, i) => (
+            <img
+              key={i}
+              src={`./screenshots/${s.img}`}
+              alt={s.caption}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${activeStep === i ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   )
