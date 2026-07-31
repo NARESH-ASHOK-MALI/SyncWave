@@ -16,6 +16,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="carousel.css">
 </head>
 <body>
     <!-- Animated background particles -->
@@ -121,6 +122,70 @@
                 <div class="orbit-device" style="--angle: 288deg; --delay: 0.8s;">
                     <div class="device-icon">🎶</div>
                     <span>Wired</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Guide / Carousel Section -->
+    <section id="guide">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Quick Start Guide</span>
+                <h2>Syncing made <span class="gradient-text">simple</span></h2>
+                <p>See how easy it is to manage multiple audio devices with SyncWave.</p>
+            </div>
+            
+            <div class="carousel-container" data-animate>
+                <div class="carousel-track">
+                    <!-- Slide 1 -->
+                    <div class="carousel-slide">
+                        <img src="assets/screenshots/Step1_LocateDownloadedexefile.jpg" alt="Step 1">
+                        <div class="carousel-caption">
+                            <h3>1. Download & Run</h3>
+                            <p>No installation required. Just double click the executable to get started.</p>
+                        </div>
+                    </div>
+                    <!-- Slide 2 -->
+                    <div class="carousel-slide">
+                        <img src="assets/screenshots/ConnectAllDevices.jpg" alt="Step 2">
+                        <div class="carousel-caption">
+                            <h3>2. Connect Devices</h3>
+                            <p>All your connected devices appear automatically.</p>
+                        </div>
+                    </div>
+                    <!-- Slide 3 -->
+                    <div class="carousel-slide">
+                        <img src="assets/screenshots/ToggleSecondaryDevicesYouWantToPlay.jpg" alt="Step 3">
+                        <div class="carousel-caption">
+                            <h3>3. Toggle & Play</h3>
+                            <p>Enable the secondary devices you want to sync in real-time.</p>
+                        </div>
+                    </div>
+                    <!-- Slide 4 -->
+                    <div class="carousel-slide">
+                        <img src="assets/screenshots/ManageVolumeofsecondaryAudiodeviceFromSystemTray.jpg" alt="System Tray">
+                        <div class="carousel-caption">
+                            <h3>Tray Volume Control</h3>
+                            <p>Quickly adjust volume or toggle devices directly from the system tray flyout.</p>
+                        </div>
+                    </div>
+                    <!-- Slide 5 -->
+                    <div class="carousel-slide">
+                        <img src="assets/screenshots/AdvanceMenu.jpg" alt="Advanced Menu">
+                        <div class="carousel-caption">
+                            <h3>Advanced Settings</h3>
+                            <p>Fine-tune latency compensation or enable High Performance Mode for reduced audio delay.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="carousel-controls">
+                    <div class="carousel-dot active"></div>
+                    <div class="carousel-dot"></div>
+                    <div class="carousel-dot"></div>
+                    <div class="carousel-dot"></div>
+                    <div class="carousel-dot"></div>
                 </div>
             </div>
         </div>
@@ -351,5 +416,6 @@
     </footer>
 
     <script src="script.js"></script>
+    <script src="carousel.js"></script>
 </body>
 </html>
