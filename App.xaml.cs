@@ -12,10 +12,8 @@ namespace SyncWave
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            base.OnStartup(e);
-
             Logger.Info("═══════════════════════════════════════");
-            Logger.Info("SyncWave v1.0.0 starting up.");
+            Logger.Info("SyncWave starting up.");
             Logger.Info("═══════════════════════════════════════");
 
             // Global unhandled exception handler
@@ -29,6 +27,8 @@ namespace SyncWave
                     MessageBoxImage.Warning);
                 args.Handled = true; // Prevent crash
             };
+
+            base.OnStartup(e);
 
             System.AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
