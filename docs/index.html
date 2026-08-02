@@ -15,8 +15,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="carousel.css">
+    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="carousel.css?v=3">
 </head>
 <body>
     <!-- Animated background particles -->
@@ -66,7 +66,7 @@
                 Stream system audio to multiple Bluetooth, USB, and wired devices simultaneously — with real-time per-device volume & latency control.
             </p>
             <div class="hero-actions">
-                <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/download/v2.0.0/SyncWave.exe" class="btn btn-primary" id="hero-download-btn">
+                <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/download/v2.0.0/SyncWave.exe" class="btn btn-primary" id="hero-download-btn" target="_blank" rel="noopener noreferrer" download>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
@@ -74,7 +74,7 @@
                     </svg>
                     Download for Windows
                 </a>
-                <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave" class="btn btn-secondary" id="hero-github-btn">
+                <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave" class="btn btn-secondary" id="hero-github-btn" target="_blank" rel="noopener noreferrer">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                     </svg>
@@ -140,7 +140,9 @@
                 <div class="carousel-track">
                     <!-- Slide 1 -->
                     <div class="carousel-slide">
-                        <img src="assets/screenshots/Step1_LocateDownloadedexefile.jpg" alt="Step 1">
+                        <div class="slide-image-wrapper">
+                            <img src="assets/screenshots/Step1_LocateDownloadedexefile.jpg" alt="Step 1">
+                        </div>
                         <div class="carousel-caption">
                             <h3>1. Download & Run</h3>
                             <p>No installation required. Just double click the executable to get started.</p>
@@ -148,40 +150,99 @@
                     </div>
                     <!-- Slide 2 -->
                     <div class="carousel-slide">
-                        <img src="assets/screenshots/ConnectAllDevices.jpg" alt="Step 2">
+                        <div class="slide-image-wrapper">
+                            <img src="assets/screenshots/Addtobackground.jpg" alt="Add to background">
+                        </div>
                         <div class="carousel-caption">
-                            <h3>2. Connect Devices</h3>
-                            <p>All your connected devices appear automatically.</p>
+                            <h3>Runs Quietly</h3>
+                            <p>Add SyncWave to the background and let it run seamlessly.</p>
                         </div>
                     </div>
                     <!-- Slide 3 -->
                     <div class="carousel-slide">
-                        <img src="assets/screenshots/ToggleSecondaryDevicesYouWantToPlay.jpg" alt="Step 3">
+                        <div class="slide-image-wrapper">
+                            <img src="assets/screenshots/ConnectAllDevices.jpg" alt="Connect devices">
+                        </div>
+                        <div class="carousel-caption">
+                            <h3>2. Connect Devices</h3>
+                            <p>All your connected devices appear automatically in the UI.</p>
+                        </div>
+                    </div>
+                    <!-- Slide 4 -->
+                    <div class="carousel-slide">
+                        <div class="slide-image-wrapper">
+                            <img src="assets/screenshots/ToggleSecondaryDevicesYouWantToPlay.jpg" alt="Toggle devices">
+                        </div>
                         <div class="carousel-caption">
                             <h3>3. Toggle & Play</h3>
                             <p>Enable the secondary devices you want to sync in real-time.</p>
                         </div>
                     </div>
-                    <!-- Slide 4 -->
-                    <div class="carousel-slide">
-                        <img src="assets/screenshots/ManageVolumeofsecondaryAudiodeviceFromSystemTray.jpg" alt="System Tray">
-                        <div class="carousel-caption">
-                            <h3>Tray Volume Control</h3>
-                            <p>Quickly adjust volume or toggle devices directly from the system tray flyout.</p>
-                        </div>
-                    </div>
                     <!-- Slide 5 -->
                     <div class="carousel-slide">
-                        <img src="assets/screenshots/AdvanceMenu.jpg" alt="Advanced Menu">
+                        <div class="slide-image-wrapper">
+                            <img src="assets/screenshots/Playing.jpg" alt="Playing audio">
+                        </div>
+                        <div class="carousel-caption">
+                            <h3>Stream Everywhere</h3>
+                            <p>Play anything on your PC — it streams to every connected device simultaneously without noticeable delay.</p>
+                        </div>
+                    </div>
+                    <!-- Slide 6 -->
+                    <div class="carousel-slide">
+                        <div class="slide-image-wrapper">
+                            <img src="assets/screenshots/ManageVolumeofsecondaryAudiodeviceFromSystemTray.jpg" alt="System Tray Volume">
+                        </div>
+                        <div class="carousel-caption">
+                            <h3>Tray Volume Control</h3>
+                            <p>Adjust volume or toggle devices directly from the system tray.</p>
+                        </div>
+                    </div>
+                    <!-- Slide 7 -->
+                    <div class="carousel-slide">
+                        <div class="slide-image-wrapper">
+                            <img src="assets/screenshots/ExitOrOpenFromSystemTray.jpg" alt="System Tray Options">
+                        </div>
+                        <div class="carousel-caption">
+                            <h3>Quick Access</h3>
+                            <p>Open or exit anytime conveniently from the system tray menu.</p>
+                        </div>
+                    </div>
+                    <!-- Slide 8 -->
+                    <div class="carousel-slide">
+                        <div class="slide-image-wrapper">
+                            <img src="assets/screenshots/AdvanceMenu.jpg" alt="Advanced Menu">
+                        </div>
                         <div class="carousel-caption">
                             <h3>Advanced Settings</h3>
-                            <p>Fine-tune latency compensation or enable High Performance Mode for reduced audio delay.</p>
+                            <p>Fine-tune latency compensation, enable audio boost, or use High Performance Mode.</p>
+                        </div>
+                    </div>
+                    <!-- Slide 9 -->
+                    <div class="carousel-slide">
+                        <div class="slide-image-wrapper">
+                            <img src="assets/screenshots/LowCPUConsumptionTaskManager.jpg" alt="Low CPU usage">
+                        </div>
+                        <div class="carousel-caption">
+                            <h3>Ultra-Lightweight</h3>
+                            <p>Runs light — barely visible CPU consumption in Task Manager.</p>
                         </div>
                     </div>
                 </div>
                 
+                <button class="carousel-nav prev-btn" aria-label="Previous slide">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <button class="carousel-nav next-btn" aria-label="Next slide">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                
                 <div class="carousel-controls">
                     <div class="carousel-dot active"></div>
+                    <div class="carousel-dot"></div>
+                    <div class="carousel-dot"></div>
+                    <div class="carousel-dot"></div>
+                    <div class="carousel-dot"></div>
                     <div class="carousel-dot"></div>
                     <div class="carousel-dot"></div>
                     <div class="carousel-dot"></div>
@@ -372,7 +433,7 @@
                     <h2>Ready to sync your audio?</h2>
                     <p>Download SyncWave for free. No installation, no sign-up — just run the exe.</p>
                     <div class="download-actions">
-                        <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/download/v2.0.0/SyncWave.exe" class="btn btn-primary btn-lg" id="footer-download-btn">
+                        <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/download/v2.0.0/SyncWave.exe" class="btn btn-primary btn-lg" id="footer-download-btn" target="_blank" rel="noopener noreferrer" download>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                                 <polyline points="7 10 12 15 17 10"/>
@@ -389,6 +450,41 @@
                         <span>Self-contained</span>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feedback Section -->
+    <section id="feedback">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Feedback</span>
+                <h2>Help improve <span class="gradient-text">SyncWave</span></h2>
+                <p>Encountered a bug or have a feature request? Let me know below.</p>
+            </div>
+            
+            <div class="feedback-container">
+                <form id="syncwave-feedback-form" class="feedback-form">
+                    <!-- Replace YOUR_WEB3FORMS_KEY with an actual Web3Forms access key when ready -->
+                    <input type="hidden" name="access_key" value="bb09276a-5dfd-4898-837f-c5cfc7f62a70">
+                    <input type="hidden" name="subject" value="SyncWave Feedback Submission">
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address (Optional)</label>
+                        <input type="email" id="email" name="email" placeholder="you@example.com" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Your Message</label>
+                        <textarea id="message" name="message" rows="5" required placeholder="Describe any issues, bugs, or feature requests you have..." class="form-input"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-submit" id="feedback-submit-btn">
+                        <span>Send Feedback</span>
+                    </button>
+                    
+                    <div id="form-status" class="form-status"></div>
+                </form>
             </div>
         </div>
     </section>
@@ -415,7 +511,7 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
-    <script src="carousel.js"></script>
+    <script src="script.js?v=3"></script>
+    <script src="carousel.js?v=3"></script>
 </body>
 </html>

@@ -167,3 +167,66 @@ const statsObserver = new IntersectionObserver(
 );
 
 stats.forEach((stat) => statsObserver.observe(stat));
+
+// ===== FEEDBACK FORM =====
+const feedbackForm = document.getElementById('syncwave-feedback-form');
+const formStatus = document.getElementById('form-status');
+const submitBtn = document.getElementById('feedback-submit-btn');
+
+if (feedbackForm) {
+    feedbackForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.querySelector('span').textContent = 'Sending...';
+        formStatus.textContent = '';
+        formStatus.className = 'form-status';
+        
+        const formData = new FormData(feedbackForm);
+        
+        // Ensure you replace this with a real key if you deploy
+        const hasAccessKey = formData.get('access_key') !== 'YOUR_WEB3FORMS_KEY' && formData.get('access_key') !== '';
+        
+        try {
+            if (!hasAccessKey) {
+                // Mock success for localhost without real key
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                formStatus.textContent = 'Feedback received! (Demo Mode)';
+                formStatus.classList.add('success');
+                feedbackForm.reset();
+            } else {
+                // Real submission
+                const response = await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    formStatus.textContent = 'Thanks! Your feedback has been sent.';
+                    formStatus.classList.add('success');
+                    feedbackForm.reset();
+                } else {
+                    throw new Error(data.message || 'Submission failed');
+                }
+            }
+        } catch (error) {
+            formStatus.textContent = 'Something went wrong. Please try again.';
+            formStatus.classList.add('error');
+            console.error(error);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.querySelector('span').textContent = 'Send Feedback';
+            
+            // Clear success message after 5 seconds
+            if (formStatus.classList.contains('success')) {
+                setTimeout(() => {
+                    formStatus.textContent = '';
+                    formStatus.classList.remove('success');
+                }, 5000);
+            }
+        }
+    });
+}

@@ -3,9 +3,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const slides = Array.from(track.children);
     const dotsNav = document.querySelector('.carousel-controls');
     const dots = Array.from(dotsNav.children);
+    const prevBtn = document.querySelector('.prev-btn');
+    const nextBtn = document.querySelector('.next-btn');
     
     let currentIndex = 0;
-    const slideDuration = 4000; // 4 seconds per slide
+    const slideDuration = 5000; // 5 seconds per slide
     let autoSlideInterval;
 
     const moveToSlide = (index) => {
@@ -24,22 +26,44 @@ document.addEventListener("DOMContentLoaded", () => {
         moveToSlide(targetIndex);
     };
 
+    const prevSlide = () => {
+        let targetIndex = currentIndex - 1;
+        if (targetIndex < 0) {
+            targetIndex = slides.length - 1; // wrap around
+        }
+        moveToSlide(targetIndex);
+    };
+
     const startAutoSlide = () => {
         autoSlideInterval = setInterval(nextSlide, slideDuration);
     };
 
-    const resetAutoSlide = () => {
+    const stopAutoSlide = () => {
         clearInterval(autoSlideInterval);
-        startAutoSlide();
     };
 
     // Click events for dots
     dots.forEach((dot, index) => {
         dot.addEventListener('click', () => {
             moveToSlide(index);
-            resetAutoSlide();
+            stopAutoSlide(); // Pause auto slideshow on manual interaction
         });
     });
+
+    // Click events for prev/next buttons
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            prevSlide();
+            stopAutoSlide(); // Pause auto slideshow on manual interaction
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            nextSlide();
+            stopAutoSlide(); // Pause auto slideshow on manual interaction
+        });
+    }
 
     // Start auto slide
     startAutoSlide();
