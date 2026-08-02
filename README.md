@@ -29,7 +29,7 @@
 
 > **Quick Start:** Download the latest `SyncWave.exe` from the [Releases](https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/latest) page — no installation required, just run it.
 >
-> - **Self-contained build** (~150 MB) — runs on any Windows 10/11 machine, no .NET runtime needed.
+> - **Self-contained build** (~70 MB) — runs on any Windows 10/11 machine, no .NET runtime needed.
 
 ---
 
