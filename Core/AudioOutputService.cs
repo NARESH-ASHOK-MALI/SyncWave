@@ -165,6 +165,43 @@ namespace SyncWave.Core
                     float initVol = _deviceVolumes.GetValueOrDefault(device.DeviceId, 1.0f);
                     stream.VolumeProvider.Volume = initVol;
 
+                    // ── Endpoint volume normalization ──────────────────────
+                    // Save original volume BEFORE any corrections, then ensure
+                    // the endpoint is unmuted and not at zero, then lock to 100%
+                    // so SyncWave's slider has full control.
+                    try
+                    {
+                        var epVol = mmDevice.AudioEndpointVolume;
+                        if (epVol != null)
+                        {
+                            // Save original system volume for restoration on StopAll()
+                            _originalSystemVolumes.TryAdd(device.DeviceId, epVol.MasterVolumeLevelScalar);
+                            Logger.Info($"Saved original system volume: {epVol.MasterVolumeLevelScalar * 100:F0}% for {device.FriendlyName}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Could not save system volume for {device.FriendlyName}: {ex.Message}");
+                    }
+
+                    // Unmute + raise from zero if needed (one-time correction, not a persistent lock)
+                    AudioEndpointUtils.EnsureEndpointIsAudible(mmDevice);
+
+                    // Unconditionally set to 100% so the app slider is the sole volume control
+                    try
+                    {
+                        var epVol = mmDevice.AudioEndpointVolume;
+                        if (epVol != null)
+                        {
+                            epVol.MasterVolumeLevelScalar = 1.0f;
+                            Logger.Info($"Set system volume to 100% for {device.FriendlyName}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Could not set system volume for {device.FriendlyName}: {ex.Message}");
+                    }
+
                     // Adaptive latency based on device type
                     int desiredLatencyMs = GetDesiredLatency(device.DeviceType);
 
@@ -199,23 +236,6 @@ namespace SyncWave.Core
                     // Use the desired latency as the measured latency estimate
                     device.MeasuredLatency = desiredLatencyMs;
                     _latencyManager.SetDeviceLatency(device.DeviceId, desiredLatencyMs);
-
-                    // Set system volume to 100% so SyncWave's slider has full control
-                    try
-                    {
-                        var vol = mmDevice.AudioEndpointVolume;
-                        if (vol != null)
-                        {
-                            // Save original system volume for restoration
-                            _originalSystemVolumes.TryAdd(device.DeviceId, vol.MasterVolumeLevelScalar);
-                            vol.MasterVolumeLevelScalar = 1.0f; // 100%
-                            Logger.Info($"Set system volume to 100% for {device.FriendlyName} (was {_originalSystemVolumes[device.DeviceId] * 100:F0}%)");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Warn($"Could not set system volume for {device.FriendlyName}: {ex.Message}");
-                    }
 
                     device.IsActive = true;
                     device.HasError = false;
