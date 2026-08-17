@@ -20,8 +20,8 @@ namespace SyncWave.Views
         private readonly CalibrationSession _session = new();
         private readonly List<AudioDeviceModel> _allDevices;
 
-        // Aperiodic click intervals matching ClickPatternGenerator
-        private static readonly int[] ClickIntervals = { 180, 340, 110, 420, 260 };
+        // Melody intervals matching SyncMelodyGenerator (ms to NEXT note)
+        private static readonly int[] NoteIntervals = { 600, 600, 600, 1200 };
 
         // Cached brushes for alignment preview
         private static readonly Brush RefTickBrush = new SolidColorBrush(Color.FromRgb(0xA0, 0xA0, 0xA0));
@@ -42,18 +42,18 @@ namespace SyncWave.Views
 
             _allDevices = devices;
 
-            // Populate reference device combo with non-BT devices first, then BT
+            // Auto-select anchor device based on highest estimated latency
             var sortedDevices = devices
                 .Where(d => !d.IsDefaultDevice)
-                .OrderBy(d => d.DeviceType == "Bluetooth" ? 1 : 0)
-                .ThenBy(d => d.FriendlyName)
+                .OrderByDescending(d => CodecLatencyEstimator.Estimate(d.DeviceType).EstimatedDelayMs)
                 .ToList();
 
-            ReferenceDeviceCombo.ItemsSource = sortedDevices;
+            AnchorDeviceCombo.ItemsSource = sortedDevices;
             if (sortedDevices.Count > 0)
-                ReferenceDeviceCombo.SelectedIndex = 0;
+                AnchorDeviceCombo.SelectedIndex = 0;
 
-            UpdateStatus("Select a reference device and click Start Calibration.");
+            UpdateDeviceQueue();
+            UpdateStatus("Anchor auto-selected. Click Start Calibration to begin.");
 
             Closed += (_, _) =>
             {
@@ -62,18 +62,23 @@ namespace SyncWave.Views
             };
         }
 
-        private void ReferenceDeviceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ChangeAnchorButton_Click(object sender, RoutedEventArgs e)
+        {
+            AnchorDeviceCombo.Visibility = AnchorDeviceCombo.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void AnchorDeviceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             UpdateDeviceQueue();
         }
 
         private void UpdateDeviceQueue()
         {
-            var refDevice = ReferenceDeviceCombo.SelectedItem as AudioDeviceModel;
-            if (refDevice == null) return;
+            var anchorDevice = AnchorDeviceCombo.SelectedItem as AudioDeviceModel;
+            if (anchorDevice == null) return;
 
             var queue = _allDevices
-                .Where(d => !d.IsDefaultDevice && d.DeviceId != refDevice.DeviceId)
+                .Where(d => !d.IsDefaultDevice && d.DeviceId != anchorDevice.DeviceId)
                 .ToList();
 
             DeviceQueueList.ItemsSource = queue;
@@ -81,15 +86,15 @@ namespace SyncWave.Views
 
         private void StartButton_Click(object sender, RoutedEventArgs e)
         {
-            var refDevice = ReferenceDeviceCombo.SelectedItem as AudioDeviceModel;
-            if (refDevice == null)
+            var anchorDevice = AnchorDeviceCombo.SelectedItem as AudioDeviceModel;
+            if (anchorDevice == null)
             {
-                UpdateStatus("⚠ Please select a reference device first.");
+                UpdateStatus("⚠ Please select an anchor device first.");
                 return;
             }
 
             var devicesToCalibrate = _allDevices
-                .Where(d => !d.IsDefaultDevice && d.DeviceId != refDevice.DeviceId)
+                .Where(d => !d.IsDefaultDevice && d.DeviceId != anchorDevice.DeviceId)
                 .ToList();
 
             if (devicesToCalibrate.Count == 0)
@@ -98,7 +103,7 @@ namespace SyncWave.Views
                 return;
             }
 
-            _session.Initialize(refDevice, devicesToCalibrate);
+            _session.Initialize(anchorDevice, devicesToCalibrate);
 
             if (_session.AdvanceToNext())
             {
@@ -137,7 +142,8 @@ namespace SyncWave.Views
 
             UpdateDelayDisplay();
             RenderAlignmentPreview();
-            UpdateStatus($"Adjust the delay slider until the clicks from both devices align.");
+            UpdateReAnchorPrompt();
+            UpdateStatus($"Adjust the delay slider until the melody notes from both devices align.");
         }
 
         private void DelaySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -148,6 +154,41 @@ namespace SyncWave.Views
             }
             UpdateDelayDisplay();
             RenderAlignmentPreview();
+            UpdateReAnchorPrompt();
+        }
+
+        private void UpdateReAnchorPrompt()
+        {
+            if (ReAnchorPrompt != null)
+            {
+                ReAnchorPrompt.Visibility = DelaySlider.Value == 0 ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private void ReAnchorButton_Click(object sender, RoutedEventArgs e)
+        {
+            var currentDevice = _session.CurrentDevice;
+            if (currentDevice != null)
+            {
+                _session.ReAnchorToCurrentDevice();
+                
+                // Update combo selection to match
+                AnchorDeviceCombo.SelectedItem = currentDevice;
+                
+                // Refresh queue UI
+                UpdateDeviceQueue();
+                
+                // Restart calibration sequence from the beginning
+                var devicesToCalibrate = _allDevices
+                    .Where(d => !d.IsDefaultDevice && d.DeviceId != currentDevice.DeviceId)
+                    .ToList();
+                _session.Initialize(currentDevice, devicesToCalibrate);
+                
+                if (_session.AdvanceToNext())
+                {
+                    ShowCalibrationPanel();
+                }
+            }
         }
 
         private void UpdateDelayDisplay()
@@ -163,7 +204,7 @@ namespace SyncWave.Views
             if (_session.IsPlaying)
             {
                 _session.StopPlayback();
-                PlayStopButton.Content = "▶ Play Clicks";
+                PlayStopButton.Content = "▶ Play Melody";
                 PlayStopButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
             }
             else
@@ -230,30 +271,30 @@ namespace SyncWave.Views
 
         /// <summary>
         /// Renders the alignment preview: two rows of tick marks showing where
-        /// clicks fire for the reference device vs. the target device.
+        /// notes fire for the anchor device vs. the target device.
         /// The target row is shifted by the current delay value.
         /// When aligned, ticks overlap — when misaligned, they visually diverge.
         /// </summary>
         private void RenderAlignmentPreview()
         {
-            if (ReferenceTickCanvas == null || TargetTickCanvas == null) return;
+            if (AnchorTickCanvas == null || TargetTickCanvas == null) return;
 
-            double canvasWidth = ReferenceTickCanvas.ActualWidth;
+            double canvasWidth = AnchorTickCanvas.ActualWidth;
             if (canvasWidth <= 0) canvasWidth = 400; // fallback before layout
 
-            ReferenceTickCanvas.Children.Clear();
+            AnchorTickCanvas.Children.Clear();
             TargetTickCanvas.Children.Clear();
 
             // Calculate total pattern duration
             int totalMs = 0;
-            foreach (var ms in ClickIntervals) totalMs += ms;
+            foreach (var ms in NoteIntervals) totalMs += ms;
 
             // We'll show 2 full loops worth of pattern
             double totalDisplayMs = totalMs * 2;
             double pixelsPerMs = canvasWidth / totalDisplayMs;
 
-            // Draw reference ticks (at their natural positions)
-            DrawTicks(ReferenceTickCanvas, 0, totalMs, pixelsPerMs, totalDisplayMs, RefTickBrush);
+            // Draw anchor ticks (at their natural positions)
+            DrawTicks(AnchorTickCanvas, 0, totalMs, pixelsPerMs, totalDisplayMs, RefTickBrush);
 
             // Draw target ticks (shifted by current delay)
             double delay = DelaySlider?.Value ?? 0;
@@ -266,7 +307,7 @@ namespace SyncWave.Views
             for (int loop = 0; loop < 2; loop++)
             {
                 int posMs = loop * loopMs;
-                foreach (var interval in ClickIntervals)
+                foreach (var interval in NoteIntervals)
                 {
                     double tickMs = posMs + offsetMs;
                     double x = tickMs * pxPerMs;

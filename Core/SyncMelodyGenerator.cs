@@ -4,26 +4,26 @@ using NAudio.Wave;
 namespace SyncWave.Core
 {
     /// <summary>
-    /// Generates an aperiodic click pattern as an ISampleProvider for perceptual
-    /// delay calibration. The pattern uses irregular inter-click intervals so that
-    /// there is exactly ONE delay offset at which two devices' patterns align —
-    /// eliminating the periodicity/aliasing ambiguity that would exist with a
-    /// regular repeating click.
+    /// Generates a synthesized melodic phrase as an ISampleProvider for perceptual
+    /// delay calibration. The pattern uses distinct pitches (an arpeggio) so that
+    /// each note is individually identifiable by ear.
     ///
-    /// The click itself is a short filtered-noise transient (~15ms) with
-    /// high-frequency content for sharp perceptual onset.
+    /// The melody provides exactly ONE delay offset at which two devices' patterns align,
+    /// eliminating the periodicity/aliasing ambiguity that would exist with a regular repeating click.
+    ///
+    /// The total loop is ~3000ms — well above the 500ms max slider range.
     /// </summary>
-    public class ClickPatternGenerator : ISampleProvider
+    public class SyncMelodyGenerator : ISampleProvider
     {
-        // ── Aperiodic interval sequence (ms) ──────────────────────
-        // Total loop ≈ 1310ms — well above the 500ms max slider range,
-        // ensuring no false-lock at offset + loop_period.
-        private static readonly int[] IntervalMs = { 180, 340, 110, 420, 260 };
+        // ── Melody sequence ───────────────────────────────────────
+        // Pitches: C5, E5, G5, C6
+        private static readonly float[] FrequenciesHz = { 523.25f, 659.25f, 783.99f, 1046.50f };
+        // Intervals until NEXT note starts (ms)
+        private static readonly int[] IntervalMs = { 600, 600, 600, 1200 };
 
-        // ── Click parameters ──────────────────────────────────────
-        private const int ClickDurationMs = 15;
-        private const float ClickFrequencyHz = 3200f;  // Sharp, easily localizable
-        private const float ClickAmplitude = 0.65f;     // Comfortable but clearly audible
+        // ── Note parameters ───────────────────────────────────────
+        private const int NoteDurationMs = 200;
+        private const float BaseAmplitude = 0.65f;
 
         private readonly WaveFormat _waveFormat;
         private readonly float[] _patternBuffer;    // Pre-rendered full loop
@@ -33,7 +33,7 @@ namespace SyncWave.Core
 
         public WaveFormat WaveFormat => _waveFormat;
 
-        /// <summary>Whether the generator is actively producing clicks.</summary>
+        /// <summary>Whether the generator is actively producing the melody.</summary>
         public bool IsPlaying
         {
             get => _isPlaying;
@@ -41,11 +41,11 @@ namespace SyncWave.Core
         }
 
         /// <summary>
-        /// Creates a click pattern generator at the specified sample rate.
+        /// Creates a melody generator at the specified sample rate.
         /// </summary>
         /// <param name="sampleRate">Sample rate (typically 48000 from WASAPI).</param>
         /// <param name="channels">Channel count (typically 2 for stereo).</param>
-        public ClickPatternGenerator(int sampleRate = 48000, int channels = 2)
+        public SyncMelodyGenerator(int sampleRate = 48000, int channels = 2)
         {
             _waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channels);
             _patternBuffer = BuildPattern(sampleRate, channels);
@@ -55,12 +55,11 @@ namespace SyncWave.Core
         }
 
         /// <summary>
-        /// Pre-renders the entire aperiodic click loop into a float buffer.
-        /// Each "click" is a windowed sine burst at ClickFrequencyHz.
+        /// Pre-renders the entire melody loop into a float buffer.
+        /// Each note is an enveloped sine wave.
         /// </summary>
         private static float[] BuildPattern(int sampleRate, int channels)
         {
-            // Calculate total loop duration from intervals
             int totalMs = 0;
             foreach (var ms in IntervalMs)
                 totalMs += ms;
@@ -68,20 +67,37 @@ namespace SyncWave.Core
             int totalSamples = (int)(sampleRate * totalMs / 1000.0);
             var buffer = new float[totalSamples * channels];
 
-            int clickSamples = (int)(sampleRate * ClickDurationMs / 1000.0);
+            int noteSamples = (int)(sampleRate * NoteDurationMs / 1000.0);
             int offsetSamples = 0;
 
-            foreach (var intervalMs in IntervalMs)
+            for (int noteIdx = 0; noteIdx < FrequenciesHz.Length; noteIdx++)
             {
-                // Render a click at the current offset
-                for (int i = 0; i < clickSamples && (offsetSamples + i) < totalSamples; i++)
-                {
-                    // Hann window for smooth envelope (no click/pop at edges)
-                    double window = 0.5 * (1.0 - Math.Cos(2.0 * Math.PI * i / clickSamples));
+                float freq = FrequenciesHz[noteIdx];
+                int interval = IntervalMs[noteIdx];
 
-                    // Sine burst
+                for (int i = 0; i < noteSamples && (offsetSamples + i) < totalSamples; i++)
+                {
+                    // Simple envelope: sharp attack, smooth decay
+                    // We'll use a modified Hann window or ADSR.
+                    // Attack: 20ms, Decay/Sustain: remainder.
+                    int attackSamples = (int)(sampleRate * 20 / 1000.0);
+                    double env = 1.0;
+
+                    if (i < attackSamples)
+                    {
+                        // Sine-based attack
+                        env = Math.Sin(Math.PI / 2.0 * i / attackSamples);
+                    }
+                    else
+                    {
+                        // Exponential decay
+                        double decayProgress = (double)(i - attackSamples) / (noteSamples - attackSamples);
+                        env = Math.Pow(1.0 - decayProgress, 2.0); // smooth drop to 0
+                    }
+
+                    // Base sine wave
                     double t = (double)i / sampleRate;
-                    float sample = (float)(ClickAmplitude * window * Math.Sin(2.0 * Math.PI * ClickFrequencyHz * t));
+                    float sample = (float)(BaseAmplitude * env * Math.Sin(2.0 * Math.PI * freq * t));
 
                     // Write to all channels
                     int bufPos = (offsetSamples + i) * channels;
@@ -93,7 +109,7 @@ namespace SyncWave.Core
                 }
 
                 // Advance by the interval duration
-                offsetSamples += (int)(sampleRate * intervalMs / 1000.0);
+                offsetSamples += (int)(sampleRate * interval / 1000.0);
             }
 
             return buffer;

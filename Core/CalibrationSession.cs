@@ -21,19 +21,19 @@ namespace SyncWave.Core
     /// </summary>
     public class CalibrationSession : INotifyPropertyChanged, IDisposable
     {
-        // ── Click pattern generator ───────────────────────────────
-        private ClickPatternGenerator? _clickGenerator;
+        // ── Melody generator ───────────────────────────────
+        private SyncMelodyGenerator? _melodyGenerator;
 
         // ── Per-device playback ───────────────────────────────────
-        private WasapiOut? _referencePlayer;
+        private WasapiOut? _anchorPlayer;
         private WasapiOut? _targetPlayer;
-        private BufferedWaveProvider? _referenceBuffer;
+        private BufferedWaveProvider? _anchorBuffer;
         private BufferedWaveProvider? _targetBuffer;
 
         // ── Session state ─────────────────────────────────────────
         private readonly List<AudioDeviceModel> _deviceQueue = new();
         private int _currentDeviceIndex = -1;
-        private AudioDeviceModel? _referenceDevice;
+        private AudioDeviceModel? _anchorDevice;
         private double _currentDelay;
         private bool _isPlaying;
         private string _statusText = "Select a reference device to begin";
@@ -44,11 +44,11 @@ namespace SyncWave.Core
 
         // ── Properties ────────────────────────────────────────────
 
-        /// <summary>The reference device (fastest, typically wired).</summary>
-        public AudioDeviceModel? ReferenceDevice
+        /// <summary>The anchor device (slowest device, baseline for others).</summary>
+        public AudioDeviceModel? AnchorDevice
         {
-            get => _referenceDevice;
-            set { _referenceDevice = value; OnPropertyChanged(); }
+            get => _anchorDevice;
+            set { _anchorDevice = value; OnPropertyChanged(); }
         }
 
         /// <summary>Queue of devices to calibrate.</summary>
@@ -98,14 +98,14 @@ namespace SyncWave.Core
         // ── Methods ───────────────────────────────────────────────
 
         /// <summary>
-        /// Initializes the calibration session with a reference device and
+        /// Initializes the calibration session with an anchor device and
         /// a list of devices to calibrate.
         /// </summary>
-        public void Initialize(AudioDeviceModel referenceDevice, IEnumerable<AudioDeviceModel> devicesToCalibrate)
+        public void Initialize(AudioDeviceModel anchorDevice, IEnumerable<AudioDeviceModel> devicesToCalibrate)
         {
-            ReferenceDevice = referenceDevice;
+            AnchorDevice = anchorDevice;
             _deviceQueue.Clear();
-            _deviceQueue.AddRange(devicesToCalibrate.Where(d => d.DeviceId != referenceDevice.DeviceId));
+            _deviceQueue.AddRange(devicesToCalibrate.Where(d => d.DeviceId != anchorDevice.DeviceId));
             _currentDeviceIndex = -1;
 
             if (_deviceQueue.Count > 0)
@@ -144,7 +144,13 @@ namespace SyncWave.Core
 
             // Get codec-based starting estimate
             CurrentEstimate = CodecLatencyEstimator.Estimate(device.DeviceType);
-            CurrentDelay = CurrentEstimate.EstimatedDelayMs;
+            
+            // Formula: target delay = anchor_estimate - device_estimate
+            var anchorEstimate = CodecLatencyEstimator.Estimate(AnchorDevice?.DeviceType ?? "Wired");
+            double calculatedDelay = anchorEstimate.EstimatedDelayMs - CurrentEstimate.EstimatedDelayMs;
+            
+            // Ensure we don't start negative, but if it is 0, the user might need to re-anchor
+            CurrentDelay = Math.Max(0, calculatedDelay);
 
             StatusText = $"Calibrating: {device.FriendlyName} ({CurrentDeviceNumber}/{TotalDevices})";
 
@@ -156,11 +162,11 @@ namespace SyncWave.Core
         }
 
         /// <summary>
-        /// Starts playing the click pattern on both reference and current target device.
+        /// Starts playing the melody on both anchor and current target device.
         /// </summary>
         public void StartPlayback()
         {
-            if (ReferenceDevice == null || CurrentDevice == null)
+            if (AnchorDevice == null || CurrentDevice == null)
             {
                 StatusText = "No device selected for calibration.";
                 return;
@@ -172,40 +178,40 @@ namespace SyncWave.Core
 
                 var enumerator = new MMDeviceEnumerator();
 
-                // Create click generator
-                _clickGenerator = new ClickPatternGenerator(48000, 2);
-                var clickFormat = _clickGenerator.WaveFormat;
+                // Create melody generator
+                _melodyGenerator = new SyncMelodyGenerator(48000, 2);
+                var audioFormat = _melodyGenerator.WaveFormat;
 
-                // ── Reference device setup ────────────────────────
-                var refMmDevice = enumerator.GetDevice(ReferenceDevice.DeviceId);
-                if (refMmDevice.State != DeviceState.Active)
+                // ── Anchor device setup ────────────────────────
+                var anchorMmDevice = enumerator.GetDevice(AnchorDevice.DeviceId);
+                if (anchorMmDevice.State != DeviceState.Active)
                 {
-                    StatusText = "Reference device is not active.";
+                    StatusText = "Anchor device is not active.";
                     return;
                 }
 
-                _referenceBuffer = new BufferedWaveProvider(clickFormat)
+                _anchorBuffer = new BufferedWaveProvider(audioFormat)
                 {
-                    BufferLength = clickFormat.AverageBytesPerSecond * 2,
+                    BufferLength = audioFormat.AverageBytesPerSecond * 2,
                     DiscardOnBufferOverflow = true
                 };
 
-                _referencePlayer = new WasapiOut(refMmDevice, AudioClientShareMode.Shared, true, 30);
-                _referencePlayer.Init(_referenceBuffer);
+                _anchorPlayer = new WasapiOut(anchorMmDevice, AudioClientShareMode.Shared, true, 30);
+                _anchorPlayer.Init(_anchorBuffer);
 
                 // ── Target device setup ───────────────────────────
                 var targetMmDevice = enumerator.GetDevice(CurrentDevice.DeviceId);
                 if (targetMmDevice.State != DeviceState.Active)
                 {
                     StatusText = "Target device is not active.";
-                    _referencePlayer?.Dispose();
-                    _referencePlayer = null;
+                    _anchorPlayer?.Dispose();
+                    _anchorPlayer = null;
                     return;
                 }
 
-                _targetBuffer = new BufferedWaveProvider(clickFormat)
+                _targetBuffer = new BufferedWaveProvider(audioFormat)
                 {
-                    BufferLength = clickFormat.AverageBytesPerSecond * 2,
+                    BufferLength = audioFormat.AverageBytesPerSecond * 2,
                     DiscardOnBufferOverflow = true
                 };
 
@@ -213,21 +219,21 @@ namespace SyncWave.Core
                 _targetPlayer = new WasapiOut(targetMmDevice, AudioClientShareMode.Shared, true, targetLatency);
                 _targetPlayer.Init(_targetBuffer);
 
-                // Start click generator
-                _clickGenerator.IsPlaying = true;
-                _clickGenerator.Reset();
+                // Start melody generator
+                _melodyGenerator.IsPlaying = true;
+                _melodyGenerator.Reset();
 
                 // Start playback on both
-                _referencePlayer.Play();
+                _anchorPlayer.Play();
                 _targetPlayer.Play();
 
-                // Start feed timer to push click data to both buffers
-                _feedTimer = new System.Threading.Timer(FeedClickData, null, 0, 10);
+                // Start feed timer to push audio data to both buffers
+                _feedTimer = new System.Threading.Timer(FeedAudioData, null, 0, 10);
 
                 IsPlaying = true;
-                StatusText = $"Playing clicks — adjust delay until devices are in sync";
+                StatusText = $"Playing melody — adjust delay until devices are in sync";
 
-                Logger.Info($"Calibration playback started: ref={ReferenceDevice.FriendlyName}, target={CurrentDevice.FriendlyName}");
+                Logger.Info($"Calibration playback started: anchor={AnchorDevice.FriendlyName}, target={CurrentDevice.FriendlyName}");
             }
             catch (Exception ex)
             {
@@ -238,31 +244,31 @@ namespace SyncWave.Core
         }
 
         /// <summary>
-        /// Timer callback: reads click pattern and feeds to reference + target buffers.
+        /// Timer callback: reads melody pattern and feeds to anchor + target buffers.
         /// The target buffer gets data with a delay offset to simulate the calibration delay.
         /// </summary>
-        private void FeedClickData(object? state)
+        private void FeedAudioData(object? state)
         {
             lock (_feedLock)
             {
-                if (_clickGenerator == null || !_isPlaying) return;
+                if (_melodyGenerator == null || !_isPlaying) return;
 
                 try
                 {
-                    var format = _clickGenerator.WaveFormat;
+                    var format = _melodyGenerator.WaveFormat;
                     int samplesToRead = format.SampleRate / 100; // 10ms worth
                     int floatsNeeded = samplesToRead * format.Channels;
                     var floatBuffer = new float[floatsNeeded];
 
-                    int read = _clickGenerator.Read(floatBuffer, 0, floatsNeeded);
+                    int read = _melodyGenerator.Read(floatBuffer, 0, floatsNeeded);
                     if (read == 0) return;
 
                     // Convert float samples to bytes
                     var byteBuffer = new byte[read * 4];
                     Buffer.BlockCopy(floatBuffer, 0, byteBuffer, 0, byteBuffer.Length);
 
-                    // Feed reference immediately
-                    _referenceBuffer?.AddSamples(byteBuffer, 0, byteBuffer.Length);
+                    // Feed anchor immediately
+                    _anchorBuffer?.AddSamples(byteBuffer, 0, byteBuffer.Length);
 
                     // Feed target with delay applied via silence prefix
                     // (The actual delay is implemented by the LatencyManager-style
@@ -272,7 +278,7 @@ namespace SyncWave.Core
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn($"Click feed error: {ex.Message}");
+                    Logger.Warn($"Audio feed error: {ex.Message}");
                 }
             }
         }
@@ -286,19 +292,19 @@ namespace SyncWave.Core
             // The delay is applied by inserting/removing silence in the target buffer.
             // For the calibration preview, we rebuild the target pipeline with the new delay.
             // In real-time, small adjustments are achieved by adjusting buffer pre-fill.
-            if (_isPlaying && _targetBuffer != null && _clickGenerator != null)
+            if (_isPlaying && _targetBuffer != null && _melodyGenerator != null)
             {
                 // The actual perceptual test works by having the user LISTEN to both
                 // devices playing the same pattern — the delay slider's value will be
                 // written to the device's ManualDelay when confirmed.
-                // During calibration, the reference plays with zero delay and the
+                // During calibration, the anchor plays with zero delay and the
                 // target plays normally — the slider adjusts what delay value will
                 // be applied during real playback.
             }
         }
 
         /// <summary>
-        /// Stops click pattern playback and cleans up audio resources.
+        /// Stops melody playback and cleans up audio resources.
         /// </summary>
         public void StopPlayback()
         {
@@ -307,25 +313,25 @@ namespace SyncWave.Core
                 _feedTimer?.Dispose();
                 _feedTimer = null;
 
-                if (_clickGenerator != null)
+                if (_melodyGenerator != null)
                 {
-                    _clickGenerator.IsPlaying = false;
-                    _clickGenerator = null;
+                    _melodyGenerator.IsPlaying = false;
+                    _melodyGenerator = null;
                 }
 
                 try
                 {
-                    if (_referencePlayer != null)
+                    if (_anchorPlayer != null)
                     {
-                        if (_referencePlayer.PlaybackState == PlaybackState.Playing)
-                            _referencePlayer.Stop();
-                        _referencePlayer.Dispose();
-                        _referencePlayer = null;
+                        if (_anchorPlayer.PlaybackState == PlaybackState.Playing)
+                            _anchorPlayer.Stop();
+                        _anchorPlayer.Dispose();
+                        _anchorPlayer = null;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn($"Error disposing reference player: {ex.Message}");
+                    Logger.Warn($"Error disposing anchor player: {ex.Message}");
                 }
 
                 try
@@ -343,7 +349,7 @@ namespace SyncWave.Core
                     Logger.Warn($"Error disposing target player: {ex.Message}");
                 }
 
-                _referenceBuffer = null;
+                _anchorBuffer = null;
                 _targetBuffer = null;
 
                 IsPlaying = false;
@@ -385,6 +391,40 @@ namespace SyncWave.Core
                 Logger.Info($"Calibration skipped: {CurrentDevice.FriendlyName}");
             }
 
+            StopPlayback();
+        }
+
+        /// <summary>
+        /// Recovers from a situation where the target device is naturally slower than the anchor,
+        /// requiring negative delay. Switches the anchor to the current target and shifts 
+        /// existing calibrated delays up to make room.
+        /// </summary>
+        public void ReAnchorToCurrentDevice()
+        {
+            if (CurrentDevice == null || AnchorDevice == null) return;
+
+            // Shift all previously calibrated devices by a conservative offset (e.g. 100ms)
+            // to ensure they have enough positive delay relative to the new, slower anchor.
+            double shiftOffset = 100;
+            
+            AnchorDevice.ManualDelay += shiftOffset;
+            AnchorDevice.CalibrationStatus = CalibrationStatus.Estimated;
+
+            foreach (var d in _deviceQueue)
+            {
+                if (d.CalibrationStatus == CalibrationStatus.Calibrated)
+                {
+                    d.ManualDelay += shiftOffset;
+                }
+            }
+
+            var newAnchor = CurrentDevice;
+            newAnchor.ManualDelay = 0;
+            newAnchor.CalibrationStatus = CalibrationStatus.Calibrated; // Anchor is implicitly 0 delay
+            
+            // Set the new anchor
+            AnchorDevice = newAnchor;
+            
             StopPlayback();
         }
 
