@@ -16,6 +16,12 @@ namespace SyncWave.Utils
 
         [JsonPropertyName("volume")]
         public double Volume { get; set; } = 100;
+
+        [JsonPropertyName("calibrationStatus")]
+        public string CalibrationStatus { get; set; } = "NotCalibrated";
+
+        [JsonPropertyName("lastCalibratedCodec")]
+        public string? LastCalibratedCodec { get; set; }
     }
 
     /// <summary>

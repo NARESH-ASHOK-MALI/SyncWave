@@ -323,6 +323,8 @@
                                                      Foreground="{StaticResource AccentPrimaryBrush}" />
                                                 <Run Text="  ·  " />
                                                 <Run Text="{Binding StatusText, Mode=OneWay}" />
+                                                <Run Text="  ·  " />
+                                                <Run Text="{Binding CalibrationStatusText, Mode=OneWay}" FontStyle="Italic" />
                                             </TextBlock>
                                         </DockPanel>
 
@@ -446,6 +448,8 @@
                                 Appearance="Primary" Margin="6" />
                         <ui:Button Content="Stop Sync" Command="{Binding StopSyncCommand}"
                                 Appearance="Danger" Margin="6" />
+                        <ui:Button Content="🎯 Calibrate Delays" Command="{Binding OpenCalibrationCommand}"
+                                Appearance="Secondary" Margin="6" ToolTip="Open the delay calibration wizard to align device timing" />
                     </WrapPanel>
 
                     <!-- Error / info message -->
@@ -457,6 +461,20 @@
                                    Foreground="{StaticResource AccentRedBrush}"
                                    FontSize="11" TextWrapping="Wrap" FontWeight="Medium"
                                    HorizontalAlignment="Center" />
+                    </Border>
+
+                    <!-- Recalibration toast snackbar -->
+                    <Border CornerRadius="6" Margin="0,6,0,0" Padding="12,8"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}"
+                            BorderThickness="1" BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+                            Visibility="{Binding RecalibrationMessage, Converter={StaticResource StringToVisConverter}, FallbackValue=Collapsed}">
+                        <DockPanel>
+                            <ui:Button DockPanel.Dock="Right" Content="Calibrate" Command="{Binding OpenCalibrationCommand}"
+                                       Appearance="Primary" Margin="8,0,0,0" Padding="10,4" />
+                            <TextBlock Text="{Binding RecalibrationMessage}" 
+                                       Foreground="{StaticResource AccentAmberBrush}"
+                                       FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        </DockPanel>
                     </Border>
                 </StackPanel>
             </Border>

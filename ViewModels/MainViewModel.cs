@@ -24,6 +24,7 @@ namespace SyncWave.ViewModels
         private readonly ICaptureService _captureService;
         private readonly AudioOutputService _outputService;
         private readonly LatencyManager _latencyManager;
+        private readonly RecalibrationToastService _recalibrationToastService;
 
         // ── Timers ────────────────────────────────────────────────
         private readonly DispatcherTimer _deviceRefreshTimer;
@@ -38,6 +39,7 @@ namespace SyncWave.ViewModels
         private bool _isSyncing;
         private string _errorMessage = string.Empty;
         private double _audioLevel;
+        private string _recalibrationMessage = string.Empty;
 
         // ── Saved profiles (loaded once at startup) ───────────────
         private Dictionary<string, DeviceProfile> _savedProfiles = new();
@@ -156,10 +158,18 @@ namespace SyncWave.ViewModels
             }
         }
 
+        /// <summary>Recalibration toast message — shown as a snackbar in the UI, auto-dismissed.</summary>
+        public string RecalibrationMessage
+        {
+            get => _recalibrationMessage;
+            set { _recalibrationMessage = value; OnPropertyChanged(); }
+        }
+
         // ── Commands ──────────────────────────────────────────────
         public ICommand StartSyncCommand { get; }
         public ICommand StopSyncCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
+        public ICommand OpenCalibrationCommand { get; }
 
         public string AppVersion => $"v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "2.0.0"}";
 
@@ -169,11 +179,13 @@ namespace SyncWave.ViewModels
             _latencyManager = new LatencyManager();
             _captureService = new ProcessLoopbackCaptureService();
             _outputService = new AudioOutputService(_latencyManager);
+            _recalibrationToastService = new RecalibrationToastService();
 
             // Wire events
             _captureService.DataAvailable += OnCaptureDataAvailable;
             _outputService.DeviceError += OnDeviceError;
             _outputService.DeviceReconnected += OnDeviceReconnected;
+            _recalibrationToastService.ToastRequested += OnRecalibrationToastRequested;
 
             // Commands — use lambda-wrapped CanExecute for proper evaluation
             StartSyncCommand = new RelayCommand(
@@ -183,6 +195,7 @@ namespace SyncWave.ViewModels
                 _ => StopSync(),
                 _ => IsSyncing);
             RefreshDevicesCommand = new RelayCommand(_ => RefreshDevices(syncVolume: true));
+            OpenCalibrationCommand = new RelayCommand(_ => OpenCalibrationWindow());
 
             // Device refresh timer (every 5 seconds)
             _deviceRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
@@ -306,6 +319,11 @@ namespace SyncWave.ViewModels
                                 model.IsSelected = true;
                                 model.ManualDelay = profile.Delay;
                                 model.Volume = sysVol ?? profile.Volume;
+
+                                // Restore calibration state
+                                if (Enum.TryParse<CalibrationStatus>(profile.CalibrationStatus, out var calStatus))
+                                    model.CalibrationStatus = calStatus;
+                                model.LastCalibratedCodec = profile.LastCalibratedCodec;
                             }
                             else if (sysVol.HasValue)
                             {
@@ -766,8 +784,65 @@ namespace SyncWave.ViewModels
 
                     _outputService.AddDevice(device);
                     Logger.Info($"Device reconnected and re-added: {device.FriendlyName}");
+
+                    // Trigger recalibration toast for BT devices
+                    _recalibrationToastService.OnDeviceReconnected(device);
                 }
             });
+        }
+
+        /// <summary>
+        /// Handles recalibration toast requests — shows a temporary snackbar message.
+        /// </summary>
+        private void OnRecalibrationToastRequested(string deviceId, string deviceName, string message)
+        {
+            Application.Current?.Dispatcher?.BeginInvoke(() =>
+            {
+                RecalibrationMessage = $"🔔 {message} [Recalibrate]";
+
+                // Auto-dismiss after 8 seconds
+                var dismissTimer = new System.Windows.Threading.DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(8)
+                };
+                dismissTimer.Tick += (_, _) =>
+                {
+                    dismissTimer.Stop();
+                    if (RecalibrationMessage.Contains(deviceName))
+                        RecalibrationMessage = string.Empty;
+                };
+                dismissTimer.Start();
+            });
+        }
+
+        /// <summary>
+        /// Opens the calibration window. Pauses normal playback while open.
+        /// </summary>
+        private void OpenCalibrationWindow()
+        {
+            var nonDefaultDevices = Devices.Where(d => !d.IsDefaultDevice).ToList();
+            if (nonDefaultDevices.Count < 2)
+            {
+                ErrorMessage = "⚠ Need at least 2 non-source devices to calibrate. Connect more devices.";
+                return;
+            }
+
+            // Pause sync if running (avoid audio collision with calibration clicks)
+            bool wasSyncing = IsSyncing;
+            if (wasSyncing)
+            {
+                StopSync();
+            }
+
+            var calibrationWindow = new Views.CalibrationWindow(nonDefaultDevices);
+            calibrationWindow.Owner = Application.Current.MainWindow;
+            calibrationWindow.ShowDialog();
+
+            // Save updated calibration data
+            SaveProfiles();
+
+            // Dismiss any recalibration toast
+            RecalibrationMessage = string.Empty;
         }
 
         /// <summary>
@@ -781,7 +856,9 @@ namespace SyncWave.ViewModels
                     .ToDictionary(d => d.DeviceId, d => new DeviceProfile
                     {
                         Delay = d.ManualDelay,
-                        Volume = d.Volume
+                        Volume = d.Volume,
+                        CalibrationStatus = d.CalibrationStatus.ToString(),
+                        LastCalibratedCodec = d.LastCalibratedCodec
                     });
                 DeviceProfileManager.Save(profiles);
             }

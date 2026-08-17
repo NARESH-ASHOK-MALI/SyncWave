@@ -4,6 +4,21 @@ using System.Runtime.CompilerServices;
 namespace SyncWave.Models
 {
     /// <summary>
+    /// Calibration status for a device's delay value.
+    /// </summary>
+    public enum CalibrationStatus
+    {
+        /// <summary>No calibration performed — delay is at default (0ms).</summary>
+        NotCalibrated,
+
+        /// <summary>Delay was estimated from codec type but not confirmed by ear.</summary>
+        Estimated,
+
+        /// <summary>Delay was confirmed by the user via perceptual calibration.</summary>
+        Calibrated
+    }
+
+    /// <summary>
     /// Represents an audio output device with its selection state,
     /// latency metrics, and synchronization parameters.
     /// </summary>
@@ -18,6 +33,8 @@ namespace SyncWave.Models
         private bool _hasError;
         private double _volume = 100;
         private bool _isDefaultDevice;
+        private CalibrationStatus _calibrationStatus = CalibrationStatus.NotCalibrated;
+        private string? _lastCalibratedCodec;
 
         /// <summary>Unique device identifier from Windows audio subsystem.</summary>
         public string DeviceId { get; set; } = string.Empty;
@@ -90,6 +107,29 @@ namespace SyncWave.Models
             get => _isDefaultDevice;
             set { _isDefaultDevice = value; OnPropertyChanged(); }
         }
+
+        /// <summary>Calibration state: NotCalibrated, Estimated, or Calibrated.</summary>
+        public CalibrationStatus CalibrationStatus
+        {
+            get => _calibrationStatus;
+            set { _calibrationStatus = value; OnPropertyChanged(); OnPropertyChanged(nameof(CalibrationStatusText)); }
+        }
+
+        /// <summary>The BT codec name at the time of last calibration (for recalibration toast detection).</summary>
+        public string? LastCalibratedCodec
+        {
+            get => _lastCalibratedCodec;
+            set { _lastCalibratedCodec = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>Human-readable calibration status for UI display.</summary>
+        public string CalibrationStatusText => CalibrationStatus switch
+        {
+            CalibrationStatus.NotCalibrated => "Not calibrated",
+            CalibrationStatus.Estimated => "Estimated",
+            CalibrationStatus.Calibrated => "Calibrated",
+            _ => "Unknown"
+        };
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
