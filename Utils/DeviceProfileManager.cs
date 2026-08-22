@@ -9,7 +9,7 @@ namespace SyncWave.Utils
     /// <summary>
     /// Per-device profile containing user preferences.
     /// </summary>
-    public class DeviceProfile
+    public class PersistedDeviceProfile
     {
         [JsonPropertyName("delay")]
         public double Delay { get; set; }
@@ -44,7 +44,7 @@ namespace SyncWave.Utils
         /// <summary>
         /// Save a set of device profiles (device ID → profile with delay + volume).
         /// </summary>
-        public static void Save(Dictionary<string, DeviceProfile> profiles)
+        public static void Save(Dictionary<string, PersistedDeviceProfile> profiles)
         {
             try
             {
@@ -66,21 +66,21 @@ namespace SyncWave.Utils
         /// Returns empty dictionary if no profile exists.
         /// Handles migration from old format (delay-only) gracefully.
         /// </summary>
-        public static Dictionary<string, DeviceProfile> Load()
+        public static Dictionary<string, PersistedDeviceProfile> Load()
         {
             try
             {
                 if (!File.Exists(_profilePath))
-                    return new Dictionary<string, DeviceProfile>();
+                    return new Dictionary<string, PersistedDeviceProfile>();
 
                 var json = File.ReadAllText(_profilePath);
 
                 // Try new format first
                 try
                 {
-                    var result = JsonSerializer.Deserialize<Dictionary<string, DeviceProfile>>(json);
+                    var result = JsonSerializer.Deserialize<Dictionary<string, PersistedDeviceProfile>>(json);
                     Logger.Info($"Loaded device profile (v2) with {result?.Count ?? 0} devices.");
-                    return result ?? new Dictionary<string, DeviceProfile>();
+                    return result ?? new Dictionary<string, PersistedDeviceProfile>();
                 }
                 catch
                 {
@@ -90,10 +90,10 @@ namespace SyncWave.Utils
                         var oldResult = JsonSerializer.Deserialize<Dictionary<string, double>>(json);
                         if (oldResult != null)
                         {
-                            var migrated = new Dictionary<string, DeviceProfile>();
+                            var migrated = new Dictionary<string, PersistedDeviceProfile>();
                             foreach (var kvp in oldResult)
                             {
-                                migrated[kvp.Key] = new DeviceProfile { Delay = kvp.Value, Volume = 100 };
+                                migrated[kvp.Key] = new PersistedDeviceProfile { Delay = kvp.Value, Volume = 100 };
                             }
                             Logger.Info($"Migrated old profile format for {migrated.Count} devices.");
                             // Save in new format
@@ -104,12 +104,12 @@ namespace SyncWave.Utils
                     catch { }
                 }
 
-                return new Dictionary<string, DeviceProfile>();
+                return new Dictionary<string, PersistedDeviceProfile>();
             }
             catch (Exception ex)
             {
                 Logger.Error("Failed to load device profile", ex);
-                return new Dictionary<string, DeviceProfile>();
+                return new Dictionary<string, PersistedDeviceProfile>();
             }
         }
     }

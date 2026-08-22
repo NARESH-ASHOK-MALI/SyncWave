@@ -42,7 +42,7 @@ namespace SyncWave.ViewModels
         private string _recalibrationMessage = string.Empty;
 
         // ── Saved profiles (loaded once at startup) ───────────────
-        private Dictionary<string, DeviceProfile> _savedProfiles = new();
+        private Dictionary<string, PersistedDeviceProfile> _savedProfiles = new();
 
         // ── Waveform ──────────────────────────────────────────────
         private double[] _waveformData = new double[200];
@@ -853,7 +853,7 @@ namespace SyncWave.ViewModels
             try
             {
                 var profiles = Devices.Where(d => d.IsSelected && !d.IsDefaultDevice)
-                    .ToDictionary(d => d.DeviceId, d => new DeviceProfile
+                    .ToDictionary(d => d.DeviceId, d => new PersistedDeviceProfile
                     {
                         Delay = d.ManualDelay,
                         Volume = d.Volume,
