@@ -64,6 +64,17 @@ namespace SyncWave.Core
         }
 
         /// <summary>
+        /// Called when the anchor device changes. Extends the existing
+        /// reconnect-toast mechanism to also surface anchor changes.
+        /// </summary>
+        public void OnAnchorChanged(string newAnchorName)
+        {
+            string message = $"Anchor switched to {newAnchorName}";
+            Logger.Info($"AnchorChange toast: {message}");
+            ToastRequested?.Invoke("anchor-change", newAnchorName, message);
+        }
+
+        /// <summary>
         /// Dismisses the toast for a specific device, resetting the cooldown timer.
         /// </summary>
         public void Dismiss(string deviceId)

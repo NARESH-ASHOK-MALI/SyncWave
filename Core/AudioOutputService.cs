@@ -234,7 +234,7 @@ namespace SyncWave.Core
                     _streams[device.DeviceId] = stream;
 
                     // Use the desired latency as the measured latency estimate
-                    device.MeasuredLatency = desiredLatencyMs;
+                    device.BufferLatencyMs = desiredLatencyMs;
                     _latencyManager.SetDeviceLatency(device.DeviceId, desiredLatencyMs);
 
                     device.IsActive = true;

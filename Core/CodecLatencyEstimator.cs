@@ -139,5 +139,18 @@ namespace SyncWave.Core
                 }
             };
         }
+
+        public static EstimationResult Estimate(SyncWave.Models.TransportType transport)
+        {
+            var deviceTypeString = transport switch
+            {
+                SyncWave.Models.TransportType.WiredOnboard => "Wired",
+                SyncWave.Models.TransportType.Usb => "USB",
+                SyncWave.Models.TransportType.Hdmi => "HDMI",
+                _ when transport.ToString().StartsWith("Bluetooth") => "Bluetooth",
+                _ => "Wired"
+            };
+            return Estimate(deviceTypeString);
+        }
     }
 }

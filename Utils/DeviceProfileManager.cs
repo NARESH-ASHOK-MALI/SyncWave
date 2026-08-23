@@ -22,6 +22,9 @@ namespace SyncWave.Utils
 
         [JsonPropertyName("lastCalibratedCodec")]
         public string? LastCalibratedCodec { get; set; }
+
+        [JsonPropertyName("isPinnedAnchor")]
+        public bool IsPinnedAnchor { get; set; }
     }
 
     /// <summary>

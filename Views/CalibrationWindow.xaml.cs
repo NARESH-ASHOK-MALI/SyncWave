@@ -42,15 +42,11 @@ namespace SyncWave.Views
 
             _allDevices = devices;
 
-            // Auto-select anchor device based on highest estimated latency
-            var sortedDevices = devices
-                .Where(d => !d.IsDefaultDevice)
-                .OrderByDescending(d => CodecLatencyEstimator.Estimate(d.DeviceType).EstimatedDelayMs)
-                .ToList();
-
+            // Auto-select anchor device based on shared anchor selector result
+            var sortedDevices = devices.Where(d => !d.IsDefaultDevice).ToList();
             AnchorDeviceCombo.ItemsSource = sortedDevices;
-            if (sortedDevices.Count > 0)
-                AnchorDeviceCombo.SelectedIndex = 0;
+            var currentAnchor = sortedDevices.FirstOrDefault(d => d.IsAnchor);
+            AnchorDeviceCombo.SelectedItem = currentAnchor ?? sortedDevices.FirstOrDefault();
 
             UpdateDeviceQueue();
             UpdateStatus("Anchor auto-selected. Click Start Calibration to begin.");
@@ -69,6 +65,10 @@ namespace SyncWave.Views
 
         private void AnchorDeviceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (IsLoaded && AnchorDeviceCombo.SelectedItem is AudioDeviceModel selectedDevice)
+            {
+                selectedDevice.IsPinnedByUser = true;
+            }
             UpdateDeviceQueue();
         }
 

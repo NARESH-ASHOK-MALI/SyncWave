@@ -26,7 +26,10 @@ namespace SyncWave.Models
     {
         private bool _isSelected;
         private double _manualDelay;
-        private double _measuredLatency;
+        private double _bufferLatencyMs;
+        private bool _isAnchor;
+        private bool _isPinnedByUser;
+        private double _heldBackDelayMs;
         private double _bufferHealth;
         private bool _isActive;
         private string _statusText = "Ready";
@@ -45,6 +48,30 @@ namespace SyncWave.Models
         /// <summary>Device connection type (Bluetooth, USB, Wired, HDMI).</summary>
         public string DeviceType { get; set; } = "Unknown";
 
+        /// <summary>Transport type detected from MMDevice properties.</summary>
+        public TransportType Transport { get; set; } = TransportType.Unknown;
+
+        /// <summary>Whether this device is the current anchor (highest-latency baseline).</summary>
+        public bool IsAnchor
+        {
+            get => _isAnchor;
+            set { _isAnchor = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>User manually pinned this device as anchor (override).</summary>
+        public bool IsPinnedByUser
+        {
+            get => _isPinnedByUser;
+            set { _isPinnedByUser = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>Computed delay to hold back this device relative to anchor.</summary>
+        public double HeldBackDelayMs
+        {
+            get => _heldBackDelayMs;
+            set { _heldBackDelayMs = Math.Max(0, value); OnPropertyChanged(); }
+        }
+
         /// <summary>Whether the user has selected this device for sync output.</summary>
         public bool IsSelected
         {
@@ -60,10 +87,10 @@ namespace SyncWave.Models
         }
 
         /// <summary>Measured output latency in milliseconds.</summary>
-        public double MeasuredLatency
+        public double BufferLatencyMs
         {
-            get => _measuredLatency;
-            set { _measuredLatency = value; OnPropertyChanged(); }
+            get => _bufferLatencyMs;
+            set { _bufferLatencyMs = value; OnPropertyChanged(); }
         }
 
         /// <summary>Buffer health percentage (0–100). Below 20 indicates risk of underrun.</summary>

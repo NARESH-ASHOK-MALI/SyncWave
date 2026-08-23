@@ -319,7 +319,7 @@
                                                     </Style>
                                                 </TextBlock.Style>
                                                 <Run Text="Latency:" />
-                                                <Run Text="{Binding MeasuredLatency, StringFormat='{}{0:F0}ms', Mode=OneWay}" 
+                                                <Run Text="{Binding BufferLatencyMs, StringFormat='{}{0:F0}ms', Mode=OneWay}" 
                                                      Foreground="{StaticResource AccentPrimaryBrush}" />
                                                 <Run Text="  ·  " />
                                                 <Run Text="{Binding StatusText, Mode=OneWay}" />

@@ -227,6 +227,7 @@ namespace SyncWave.ViewModels
 
             // Initial device enumeration
             RefreshDevices(syncVolume: true);
+            RecomputeAnchor();
 
             _deviceRefreshTimer.Start();
 
@@ -319,6 +320,7 @@ namespace SyncWave.ViewModels
                                 model.IsSelected = true;
                                 model.ManualDelay = profile.Delay;
                                 model.Volume = sysVol ?? profile.Volume;
+                                model.IsPinnedByUser = profile.IsPinnedAnchor;
 
                                 // Restore calibration state
                                 if (Enum.TryParse<CalibrationStatus>(profile.CalibrationStatus, out var calStatus))
@@ -365,6 +367,8 @@ namespace SyncWave.ViewModels
                         }
                     }
                 }
+
+                RecomputeAnchor();
 
                 Logger.Info($"Device refresh: {Devices.Count} devices found. Default: {defaultDeviceId}");
             }
@@ -755,6 +759,12 @@ namespace SyncWave.ViewModels
                     device.IsActive = false;
                     device.StatusText = $"Disconnected";
                     device.BufferHealth = 0;
+
+                    if (device.IsAnchor)
+                    {
+                        device.IsAnchor = false;
+                        RecomputeAnchor();
+                    }
                 }
 
                 ErrorMessage = $"⚠ Device disconnected: {device?.FriendlyName ?? deviceId}";
@@ -784,6 +794,8 @@ namespace SyncWave.ViewModels
 
                     _outputService.AddDevice(device);
                     Logger.Info($"Device reconnected and re-added: {device.FriendlyName}");
+                    
+                    RecomputeAnchor();
 
                     // Trigger recalibration toast for BT devices
                     _recalibrationToastService.OnDeviceReconnected(device);
@@ -838,6 +850,8 @@ namespace SyncWave.ViewModels
             calibrationWindow.Owner = Application.Current.MainWindow;
             calibrationWindow.ShowDialog();
 
+            RecomputeAnchor();
+
             // Save updated calibration data
             SaveProfiles();
 
@@ -858,7 +872,8 @@ namespace SyncWave.ViewModels
                         Delay = d.ManualDelay,
                         Volume = d.Volume,
                         CalibrationStatus = d.CalibrationStatus.ToString(),
-                        LastCalibratedCodec = d.LastCalibratedCodec
+                        LastCalibratedCodec = d.LastCalibratedCodec,
+                        IsPinnedAnchor = d.IsPinnedByUser
                     });
                 DeviceProfileManager.Save(profiles);
             }
@@ -891,6 +906,52 @@ namespace SyncWave.ViewModels
             _captureService.Dispose();
             _outputService.Dispose();
             GC.SuppressFinalize(this);
+        }
+
+        private readonly AnchorSelector _anchorSelector = new();
+
+        private void RecomputeAnchor()
+        {
+            var profiles = Devices
+                .Where(d => d.IsSelected || d.IsDefaultDevice)
+                .Select(d => new AnchorDeviceProfile
+                {
+                    Id = d.DeviceId,
+                    FriendlyName = d.FriendlyName,
+                    Transport = TransportDetector.ToTransportType(d.DeviceType),
+                    EstimatedLatencyMs = CodecLatencyEstimator.Estimate(d.DeviceType).EstimatedDelayMs,
+                    // Only treat ear-verified delay as "measured" — Estimated status is still a guess
+                    MeasuredLatencyMs = d.CalibrationStatus == CalibrationStatus.Calibrated ? d.ManualDelay : null,
+                    IsAnchor = d.IsAnchor,
+                    IsPinnedByUser = d.IsPinnedByUser,
+                })
+                .ToList();
+
+            var result = _anchorSelector.Recompute(profiles);
+            if (result.Anchor == null) return;
+
+            foreach (var profile in profiles)
+            {
+                var device = Devices.FirstOrDefault(d => d.DeviceId == profile.Id);
+                if (device == null) continue;
+
+                device.IsAnchor = profile.IsAnchor;
+                device.HeldBackDelayMs = profile.HeldBackDelayMs;
+
+                // Auto-fill only devices the user hasn't calibrated by ear yet
+                if (device.CalibrationStatus == CalibrationStatus.NotCalibrated)
+                {
+                    device.ManualDelay = profile.HeldBackDelayMs;
+                    device.CalibrationStatus = CalibrationStatus.Estimated;
+                }
+            }
+
+            if (result.AnchorChanged)
+            {
+                Logger.Info($"Anchor changed to: {result.Anchor.FriendlyName} ({result.Anchor.EffectiveLatencyMs:F0}ms)");
+                // TODO: decide auto vs. manual recal — see AnchorChanged handler
+                _recalibrationToastService.OnAnchorChanged(result.Anchor.FriendlyName);
+            }
         }
     }
 }
