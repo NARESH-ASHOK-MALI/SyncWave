@@ -156,12 +156,26 @@ namespace SyncWave.ViewModels
             }
         }
 
+        private string _hotkeyString = HotkeyManager.LoadHotkeyConfig();
+        public string HotkeyString
+        {
+            get => _hotkeyString;
+            set
+            {
+                if (_hotkeyString != value)
+                {
+                    _hotkeyString = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         // ── Commands ──────────────────────────────────────────────
         public ICommand StartSyncCommand { get; }
         public ICommand StopSyncCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
 
-        public string AppVersion => $"v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "2.0.0"}";
+        public string AppVersion => $"v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "2.0.2"}";
 
         // ── Constructor ───────────────────────────────────────────
         public MainViewModel()
