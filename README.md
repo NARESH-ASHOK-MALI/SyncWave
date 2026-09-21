@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-2.0.0-blue" alt="Version 2.0.0" />
+  <img src="https://img.shields.io/badge/Version-2.0.2-blue" alt="Version 2.0.2" />
   <img src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet" alt=".NET 8" />
   <img src="https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows" alt="Windows" />
   <img src="https://img.shields.io/badge/Audio-Process%20Loopback-FF6B00" alt="Process Loopback Capture" />
@@ -46,6 +46,7 @@
 | 🚫 **Echo Prevention** | Auto-detects source device and skips it to prevent audio doubling |
 | 💾 **Profile Persistence** | Auto-saves device selection, volume, and delay settings |
 | 🎨 **Windows 11 Native UI** | Acrylic/Mica backdrop, auto light/dark theme, and a system tray quick-volume flyout |
+| ⌨️ **Global Hotkey** | Toggle the flyout window instantly from anywhere (default: `Ctrl+Shift+Space`) |
 
 > **Note:** Screenshots may not yet reflect the new Windows 11 Native UI.
 

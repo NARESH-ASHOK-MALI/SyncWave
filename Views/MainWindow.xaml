@@ -237,6 +237,11 @@
                                              Margin="0,16,0,8" VerticalAlignment="Center" />
                             <TextBlock Text="Reduces WASAPI buffer to ~15ms. Takes effect on next Start Sync. Warning: may cause audio crackling on weaker systems." 
                                        FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" />
+
+                            <TextBlock Text="Global Flyout Hotkey" FontWeight="SemiBold" FontSize="12" Margin="0,16,0,4" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <TextBox Text="{Binding HotkeyString, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Padding="6,4" />
+                            <TextBlock Text="Default: Ctrl+Shift+Space. Examples: Ctrl+Alt+S, Alt+Shift+F1."
+                                       FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" />
                         </StackPanel>
                     </Border>
                 </Popup>

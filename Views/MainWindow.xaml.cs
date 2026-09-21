@@ -49,8 +49,49 @@ namespace SyncWave.Views
             Closed += (_, _) =>
             {
                 _waveformTimer.Stop();
+                _hotkeyManager?.Dispose();
                 (_vm as IDisposable)?.Dispose();
             };
+        }
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            var source = PresentationSource.FromVisual(this) as System.Windows.Interop.HwndSource;
+            if (source != null)
+            {
+                _hotkeyManager = new SyncWave.Utils.HotkeyManager();
+                _hotkeyManager.HotkeyPressed += (s, ev) =>
+                {
+                    Dispatcher.Invoke(() => ToggleFlyout());
+                };
+                bool success = _hotkeyManager.Register(source);
+
+                if (_vm != null)
+                {
+                    if (!success)
+                    {
+                        _vm.ErrorMessage = $"⚠ Could not register global hotkey '{_hotkeyManager.CurrentHotkeyString}'. Combination may be in use by another app.";
+                    }
+
+                    _vm.PropertyChanged += (s, ev) =>
+                    {
+                        if (ev.PropertyName == nameof(MainViewModel.HotkeyString) && _hotkeyManager != null)
+                        {
+                            bool regSuccess = _hotkeyManager.UpdateHotkey(_vm.HotkeyString);
+                            if (!regSuccess)
+                            {
+                                _vm.ErrorMessage = $"⚠ Failed to register hotkey '{_vm.HotkeyString}'. Combination may be in use.";
+                            }
+                            else
+                            {
+                                _vm.ErrorMessage = string.Empty;
+                            }
+                        }
+                    };
+                }
+            }
         }
 
 
@@ -155,48 +196,86 @@ namespace SyncWave.Views
         [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
         private static extern bool GetCursorPos(out POINT lpPoint);
 
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
         public struct POINT { public int X; public int Y; }
 
-        private FlyoutWindow _flyout;
+        private FlyoutWindow? _flyout;
+        private SyncWave.Utils.HotkeyManager? _hotkeyManager;
 
         private void PositionFlyout()
         {
+            if (_flyout == null) return;
+
             if (GetCursorPos(out POINT pt))
             {
-                var transform = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformFromDevice;
+                var source = PresentationSource.FromVisual(_flyout) ?? PresentationSource.FromVisual(this);
+                var transform = source?.CompositionTarget?.TransformFromDevice;
                 Point logicalPos = transform.HasValue ? transform.Value.Transform(new Point(pt.X, pt.Y)) : new Point(pt.X, pt.Y);
 
                 double w = _flyout.ActualWidth > 0 ? _flyout.ActualWidth : (double.IsNaN(_flyout.Width) ? 300 : _flyout.Width);
-                double h = _flyout.ActualHeight > 0 ? _flyout.ActualHeight : 200; // Height is Auto (NaN) initially
+                double h = _flyout.ActualHeight > 0 ? _flyout.ActualHeight : 200;
 
-                _flyout.Left = logicalPos.X - (w / 2);
-                _flyout.Top = logicalPos.Y - h - 10;
+                double screenWidth = SystemParameters.PrimaryScreenWidth;
+                double screenHeight = SystemParameters.PrimaryScreenHeight;
+
+                double left = logicalPos.X - (w / 2);
+                double top = logicalPos.Y - h - 10;
+
+                if (left < 0) left = 10;
+                if (left + w > screenWidth) left = screenWidth - w - 10;
+                if (top < 0) top = logicalPos.Y + 10;
+                if (top + h > screenHeight) top = screenHeight - h - 10;
+
+                _flyout.Left = left;
+                _flyout.Top = top;
             }
         }
 
-        private void TrayIcon_TrayLeftMouseUp(object sender, RoutedEventArgs e)
+        public void ToggleFlyout()
         {
             try
             {
+                if (_flyout != null && _flyout.IsVisible)
+                {
+                    _flyout.Hide();
+                    return;
+                }
+
                 if (_flyout == null)
                 {
                     _flyout = new FlyoutWindow((MainViewModel)this.DataContext);
                     _flyout.WindowStartupLocation = WindowStartupLocation.Manual;
                     _flyout.SizeChanged += (s, ev) => PositionFlyout();
                 }
-                
+
                 _flyout.UpdateNoDevicesText();
                 PositionFlyout();
-                
+
                 _flyout.Show();
+
+                var hwnd = new System.Windows.Interop.WindowInteropHelper(_flyout).Handle;
+                if (hwnd != IntPtr.Zero)
+                {
+                    SetForegroundWindow(hwnd);
+                }
+
                 _flyout.Activate();
+                _flyout.Focus();
+                System.Windows.Input.Keyboard.Focus(_flyout);
             }
             catch (Exception ex)
             {
-                SyncWave.Utils.Logger.Error("Exception in TrayLeftMouseUp", ex);
-                System.Windows.MessageBox.Show(ex.ToString(), "Flyout Crash");
+                SyncWave.Utils.Logger.Error("Exception in ToggleFlyout", ex);
             }
+        }
+
+        private void TrayIcon_TrayLeftMouseUp(object sender, RoutedEventArgs e)
+        {
+            ToggleFlyout();
         }
 
         protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)
