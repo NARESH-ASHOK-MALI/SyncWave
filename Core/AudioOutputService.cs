@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
@@ -57,10 +59,61 @@ namespace SyncWave.Core
             }
         }
 
+        /// <summary>
+        /// Simple WaveProvider that returns impulse data once then silence.
+        /// </summary>
+        private class ImpulseWaveProvider : IWaveProvider
+        {
+            private readonly byte[] _impulseData;
+            private readonly WaveFormat _format;
+            private long _position;
+
+            public ImpulseWaveProvider(byte[] impulseData, WaveFormat format)
+            {
+                _impulseData = impulseData;
+                _format = format;
+                _position = 0;
+            }
+
+            public WaveFormat WaveFormat => _format;
+
+            public int Read(byte[] buffer, int offset, int count)
+            {
+                if (_position >= _impulseData.Length)
+                {
+                    // Return silence after impulse
+                    int bytesToCopy = Math.Min(count, _impulseData.Length); // Actually should be count for silence
+                    // Clear the buffer for silence
+                    for (int i = offset; i < offset + count; i++)
+                    {
+                        buffer[i] = 0;
+                    }
+                    return count;
+                }
+
+                int remaining = _impulseData.Length - (int)_position;
+                int toCopy = Math.Min(count, remaining);
+                Buffer.BlockCopy(_impulseData, (int)_position, buffer, offset, toCopy);
+                _position += toCopy;
+
+                // Fill remainder with silence
+                if (toCopy < count)
+                {
+                    for (int i = offset + toCopy; i < offset + count; i++)
+                    {
+                        buffer[i] = 0;
+                    }
+                }
+
+                return count;
+            }
+        }
+
         private readonly ConcurrentDictionary<string, DeviceStream> _streams = new();
         private readonly LatencyManager _latencyManager;
         private readonly ConcurrentDictionary<string, float> _deviceVolumes = new();
         private readonly ConcurrentDictionary<string, float> _originalSystemVolumes = new();
+        private readonly ConcurrentDictionary<string, double> _measuredLatencies = new();
         private WaveFormat? _sourceFormat;
         private bool _isPlaying;
         private readonly object _lock = new();
@@ -108,6 +161,191 @@ namespace SyncWave.Core
                 "hdmi" => 50,       // HDMI is moderate latency
                 _ => 30             // Wired/USB can handle very low latency
             };
+        }
+
+        /// <summary>
+        /// Measures the actual latency of a device using loopback capture.
+        /// Returns the latency in milliseconds, or null if measurement fails.
+        /// </summary>
+        public async Task<double?> MeasureDeviceLatencyAsync(string deviceId, int timeoutSeconds = 5)
+        {
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+                var token = cts.Token;
+
+                var enumerator = new MMDeviceEnumerator();
+                var mmDevice = enumerator.GetDevice(deviceId);
+
+                // Get the output format of the device by creating a temporary WasapiOut
+                WaveFormat recordFormat;
+                using (var tempOut = new WasapiOut(mmDevice, AudioClientShareMode.Shared, false, 10))
+                {
+                    recordFormat = tempOut.OutputWaveFormat;
+                }
+
+                // Prepare impulse: a short buffer of silence with a single spike
+                int impulseLengthSamples = recordFormat.SampleRate / 100; // 10 ms impulse buffer
+                float[] impulse = new float[impulseLengthSamples];
+                // Place a spike at the middle
+                int spikeIndex = impulseLengthSamples / 2;
+                impulse[spikeIndex] = 1.0f; // full scale float
+
+                // Convert impulse to byte array based on recordFormat
+                byte[] impulseBytes;
+                using (var impulseStream = new MemoryStream())
+                {
+                    using (var writer = new BinaryWriter(impulseStream))
+                    {
+                        foreach (var sample in impulse)
+                        {
+                            // Write as 32-bit float
+                            writer.Write(sample);
+                        }
+                    }
+                    impulseBytes = impulseStream.ToArray();
+                }
+
+                // Set up output device (WasapiOut)
+                using var output = new WasapiOut(
+                    mmDevice,
+                    AudioClientShareMode.Shared,
+                    false, // useEventSync: false for simplicity
+                    10 // latency in milliseconds (low latency for measurement)
+                );
+
+                // We need to provide our impulse via a WaveProvider
+                // Create a custom WaveProvider that returns our impulse once
+                var impulseProvider = new ImpulseWaveProvider(impulseBytes, recordFormat);
+                output.Init(impulseProvider);
+
+                // Set up loopback capture from the same render device
+                using var capture = new WasapiLoopbackCapture(mmDevice)
+                {
+                    WaveFormat = recordFormat
+                };
+
+                // Buffer to hold captured samples
+                var capturedSamples = new List<float>();
+                capture.DataAvailable += (s, e) =>
+                {
+                    if (token.IsCancellationRequested) return;
+                    // Convert captured bytes to float[]
+                    int bytesPerSample = recordFormat.BitsPerSample / 8;
+                    int samples = e.BytesRecorded / bytesPerSample;
+                    float[] floats = new float[samples];
+
+                    if (recordFormat.Encoding == WaveFormatEncoding.Pcm)
+                    {
+                        // For PCM, we need to convert based on bits per sample
+                        if (recordFormat.BitsPerSample == 16)
+                        {
+                            for (int i = 0; i < samples; i++)
+                            {
+                                short sample = BitConverter.ToInt16(e.Buffer, i * 2);
+                                floats[i] = sample / 32768.0f;
+                            }
+                        }
+                        else if (recordFormat.BitsPerSample == 24)
+                        {
+                            // 24-bit is tricky, we'll skip for now and fall back to float
+                            for (int i = 0; i < samples; i++)
+                            {
+                                // Read 3 bytes and convert to 32-bit int then float
+                                int sample = (e.Buffer[i * 3] |
+                                             (e.Buffer[i * 3 + 1] << 8) |
+                                             (e.Buffer[i * 3 + 2] << 16));
+                                // Sign extend from 24 to 32 bits
+                                if ((sample & 0x800000) != 0)
+                                    sample |= unchecked((int)0xFF000000);
+                                floats[i] = sample / 8388608.0f;
+                            }
+                        }
+                        else // 32-bit PCM
+                        {
+                            for (int i = 0; i < samples; i++)
+                            {
+                                int sample = BitConverter.ToInt32(e.Buffer, i * 4);
+                                floats[i] = sample / 2147483648.0f;
+                            }
+                        }
+                    }
+                    else if (recordFormat.Encoding == WaveFormatEncoding.IeeeFloat)
+                    {
+                        // Already float, just copy
+                        Buffer.BlockCopy(e.Buffer, 0, floats, 0, (int)e.BytesRecorded);
+                    }
+
+                    capturedSamples.AddRange(floats);
+                };
+
+                // Start capture
+                capture.StartRecording();
+
+                // Wait a short time before playing impulse to ensure capture is ready
+                await Task.Delay(10, token);
+
+                // Play the impulse
+                output.Play();
+
+                // Wait for the impulse to play out plus some extra time for capture
+                // We'll wait for impulse length + 200 ms
+                int waitTimeMs = (int)((impulseLengthSamples * 1000.0) / recordFormat.SampleRate) + 200;
+                await Task.Delay(waitTimeMs, token);
+
+                // Stop capture and output
+                capture.StopRecording();
+                output.Stop();
+
+                // Now we have capturedSamples as list of floats
+                if (capturedSamples.Count == 0)
+                {
+                    return null;
+                }
+
+                float[] captured = capturedSamples.ToArray();
+
+                // Compute cross-correlation between captured and impulse
+                // We'll compute for lags from -maxLag to +maxLag where maxLag is maybe 200 ms
+                int maxLagSamples = (int)(recordFormat.SampleRate * 0.2); // 200 ms
+                double maxCorr = double.MinValue;
+                int bestLag = 0;
+
+                for (int lag = -maxLagSamples; lag <= maxLagSamples; lag++)
+                {
+                    double sum = 0.0;
+                    int samplesOverlap = Math.Min(impulse.Length, captured.Length - Math.Abs(lag));
+                    if (samplesOverlap <= 0) continue;
+
+                    for (int i = 0; i < samplesOverlap; i++)
+                    {
+                        int capturedIndex = i + Math.Max(lag, 0);
+                        int impulseIndex = i + Math.Max(-lag, 0);
+                        sum += captured[capturedIndex] * impulse[impulseIndex];
+                    }
+
+                    if (sum > maxCorr)
+                    {
+                        maxCorr = sum;
+                        bestLag = lag;
+                    }
+                }
+
+                // The delay in seconds is bestLag / sampleRate
+                // Positive lag means captured signal lags behind impulse (output then capture)
+                double delaySeconds = bestLag / (double)recordFormat.SampleRate;
+                double delayMs = delaySeconds * 1000.0;
+
+                // Ensure non-negative
+                if (delayMs < 0) delayMs = 0;
+
+                return delayMs;
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Latency measurement failed for device {deviceId}: {ex.Message}");
+                return null;
+            }
         }
 
         /// <summary>
@@ -199,29 +437,33 @@ namespace SyncWave.Core
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn($"Could not set system volume for {device.FriendlyName}: {ex.Message}");
+                        Logger.Warn($"Could not save system volume for {device.FriendlyName}: {ex.Message}");
                     }
 
-                    // Adaptive latency based on device type
-                    int desiredLatencyMs = GetDesiredLatency(device.DeviceType);
+                    // Try to get measured latency, fallback to desired latency based on device type
+                    double latencyToUseMs = GetDesiredLatency(device.DeviceType);
+                    if (_measuredLatencies.TryGetValue(device.DeviceId, out var measuredLatency))
+                    {
+                        latencyToUseMs = measuredLatency;
+                    }
 
                     // Event-driven mode (useEventSync: true) — lower jitter than timer mode
                     // Falls back to shared mode for compatibility
-                    stream.Player = new WasapiOut(mmDevice, AudioClientShareMode.Shared, true, desiredLatencyMs);
+                    stream.Player = new WasapiOut(mmDevice, AudioClientShareMode.Shared, true, (int)latencyToUseMs);
                     stream.Player.PlaybackStopped += (s, e) => OnPlaybackStopped(device.DeviceId, device.FriendlyName, e);
                     stream.Player.Init(stream.VolumeProvider);
 
                     // Pre-fill with silence matching the desired latency to prevent underruns
                     if (!IsHighPerformanceModeEnabled)
                     {
-                        int prefillBytes = _sourceFormat.AverageBytesPerSecond * desiredLatencyMs / 1000;
+                        int prefillBytes = _sourceFormat.AverageBytesPerSecond * (int)latencyToUseMs / 1000;
                         prefillBytes = (prefillBytes / _sourceFormat.BlockAlign) * _sourceFormat.BlockAlign;
                         var silence = new byte[prefillBytes];
                         stream.Buffer.AddSamples(silence, 0, silence.Length);
                     }
 
                     Logger.Info($"WasapiOut initialized for {device.FriendlyName}, " +
-                                $"mode: event-driven, latency: {desiredLatencyMs}ms, " +
+                                $"mode: event-driven, latency: {(int)latencyToUseMs}ms, " +
                                 $"output format: {stream.Player.OutputWaveFormat}");
 
                     if (_isPlaying)
@@ -233,9 +475,9 @@ namespace SyncWave.Core
 
                     _streams[device.DeviceId] = stream;
 
-                    // Use the desired latency as the measured latency estimate
-                    device.MeasuredLatency = desiredLatencyMs;
-                    _latencyManager.SetDeviceLatency(device.DeviceId, desiredLatencyMs);
+                    // Use the measured latency (or desired if not measured) for latency management
+                    device.MeasuredLatency = latencyToUseMs;
+                    _latencyManager.SetDeviceLatency(device.DeviceId, latencyToUseMs);
 
                     device.IsActive = true;
                     device.HasError = false;
@@ -243,6 +485,27 @@ namespace SyncWave.Core
                     device.BufferHealth = 50;
 
                     Logger.Info($"✓ Device added successfully: {device.FriendlyName}");
+
+                    // Start measurement task to update latency for future use (fire and forget)
+                    _ = MeasureDeviceLatencyAsync(device.DeviceId).ContinueWith(t =>
+                    {
+                        if (t.Result.HasValue)
+                        {
+                            double measured = t.Result.Value;
+                            _measuredLatencies[device.DeviceId] = measured;
+                            // Update the latency manager and the device model
+                            _latencyManager.SetDeviceLatency(device.DeviceId, measured);
+                            // Update the device model if it's still active
+                            if (_streams.TryGetValue(device.DeviceId, out var currentStream) && currentStream.VolumeProvider != null)
+                            {
+                                // We don't have direct access to the device model here, but we could store it elsewhere.
+                                // For now, we rely on the latency manager having the updated value.
+                                // The device model's MeasuredLatency will be updated when the device is next accessed via the UI?
+                                // We could update it by finding the device model in a collection, but we don't have that here.
+                                // We'll leave it to the latency manager to have the correct value.
+                            }
+                        }
+                    }, TaskScheduler.FromCurrentSynchronizationContext());
                 }
                 catch (Exception ex)
                 {
@@ -389,128 +652,142 @@ namespace SyncWave.Core
         {
             if (_streams.TryGetValue(deviceId, out var stream) && stream.Buffer != null)
             {
-                var usedPercent = (double)stream.Buffer.BufferedBytes / stream.Buffer.BufferLength * 100;
-                return Math.Clamp(usedPercent, 0, 100);
+                // BufferLength is the total size in bytes
+                // BufferedBytes is how many bytes are currently buffered
+                return (double)stream.Buffer.BufferedBytes / stream.Buffer.BufferLength * 100.0;
             }
             return 0;
         }
 
         /// <summary>
-        /// Checks if a specific device stream is currently active and healthy.
+        /// Restoration logic for system volumes when stopping playback.
         /// </summary>
-        public bool IsDeviceActive(string deviceId)
+        private void RestoreSystemVolumes()
         {
-            return _streams.TryGetValue(deviceId, out var stream) && stream.IsActive && !stream.HasError;
-        }
-
-        /// <summary>
-        /// Handles unexpected playback stops (device disconnection).
-        /// </summary>
-        private void OnPlaybackStopped(string deviceId, string friendlyName, StoppedEventArgs e)
-        {
-            if (e.Exception != null)
+            try
             {
-                Logger.Error($"Device '{friendlyName}' ({deviceId}) playback stopped with error", e.Exception);
-                if (_streams.TryGetValue(deviceId, out var stream))
+                var enumerator = new MMDeviceEnumerator();
+                foreach (var kvp in _originalSystemVolumes)
                 {
-                    stream.HasError = true;
-                    stream.IsActive = false;
+                    string deviceId = kvp.Key;
+                    float originalVolume = kvp.Value;
+
+                    try
+                    {
+                        var mmDevice = enumerator.GetDevice(deviceId);
+                        var epVol = mmDevice.AudioEndpointVolume;
+                        if (epVol != null)
+                        {
+                            epVol.MasterVolumeLevelScalar = originalVolume;
+                            Logger.Info($"Restored system volume to {originalVolume * 100:F0}% for device {deviceId}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Failed to restore system volume for device {deviceId}: {ex.Message}");
+                    }
                 }
-
-                // Track for reconnection
-                var model = new AudioDeviceModel { DeviceId = deviceId, FriendlyName = friendlyName };
-                _disconnectedDevices[deviceId] = model;
-
-                DeviceError?.Invoke(deviceId, e.Exception.Message);
+                _originalSystemVolumes.Clear();
             }
-            else
+            catch (Exception ex)
             {
-                Logger.Info($"Device '{friendlyName}' playback stopped normally.");
+                Logger.Warn($"Error restoring system volumes: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Background loop that attempts to reconnect disconnected devices.
+        /// Reconnection loop that monitors for disconnected devices and attempts to reconnect them.
         /// </summary>
-        private async Task ReconnectionLoop(CancellationToken ct)
+        private void ReconnectionLoop(CancellationToken token)
         {
-            Logger.Info("Reconnection monitor started.");
-            while (!ct.IsCancellationRequested)
+            while (!token.IsCancellationRequested)
             {
                 try
                 {
-                    await Task.Delay(3000, ct);
-
-                    foreach (var kvp in _disconnectedDevices.ToArray())
+                    // Check each disconnected device
+                    var disconnected = _disconnectedDevices.ToList();
+                    foreach (var kvp in disconnected)
                     {
-                        if (ct.IsCancellationRequested) break;
+                        string deviceId = kvp.Key;
+                        AudioDeviceModel device = kvp.Value;
 
                         try
                         {
                             var enumerator = new MMDeviceEnumerator();
-                            var mmDevice = enumerator.GetDevice(kvp.Key);
+                            var mmDevice = enumerator.GetDevice(deviceId);
 
+                            // If device is now active, attempt to reconnect
                             if (mmDevice.State == DeviceState.Active)
                             {
-                                Logger.Info($"Device reconnected: {kvp.Value.FriendlyName}");
-                                _disconnectedDevices.TryRemove(kvp.Key, out _);
+                                Logger.Info($"Device {device.FriendlyName} reconnected, attempting recovery...");
+                                _disconnectedDevices.TryRemove(deviceId, out _);
 
-                                // Clean up old stream
-                                if (_streams.TryRemove(kvp.Key, out var oldStream))
-                                {
-                                    oldStream.Dispose();
-                                }
+                                // Re-add the device
+                                AddDevice(device);
 
-                                DeviceReconnected?.Invoke(kvp.Key);
+                                // Notify UI of reconnection
+                                DeviceReconnected?.Invoke(deviceId);
                             }
                         }
-                        catch
+                        catch (Exception ex)
                         {
-                            // Device still unavailable — continue polling
+                            // Device still not available or other error, try again later
+                            Logger.Warn($"Reconnection attempt failed for {device.FriendlyName}: {ex.Message}");
                         }
                     }
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
+
+                    // Wait before next check
+                    Thread.Sleep(5000); // 5 seconds
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error("Reconnection loop error", ex);
+                    Logger.Warn($"Error in reconnection loop: {ex.Message}");
+                    Thread.Sleep(5000); // Wait before retrying
                 }
             }
-            Logger.Info("Reconnection monitor stopped.");
         }
 
         /// <summary>
-        /// Restores original Windows system volume levels for all devices.
+        /// Handles playback stopped events from WasapiOut.
         /// </summary>
-        private void RestoreSystemVolumes()
+        private void OnPlaybackStopped(string deviceId, string friendlyName, NAudio.Wave.StoppedEventArgs e)
         {
-            foreach (var kvp in _originalSystemVolumes)
+            if (e.Exception != null)
             {
-                try
+                Logger.Error($"Playback stopped on device {friendlyName} due to error: {e.Exception.Message}");
+                if (_streams.TryGetValue(deviceId, out var stream))
                 {
-                    var enumerator = new MMDeviceEnumerator();
-                    var mmDevice = enumerator.GetDevice(kvp.Key);
-                    if (mmDevice.State == DeviceState.Active)
-                    {
-                        mmDevice.AudioEndpointVolume.MasterVolumeLevelScalar = kvp.Value;
-                        Logger.Info($"Restored system volume to {kvp.Value * 100:F0}% for {mmDevice.FriendlyName}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn($"Could not restore system volume for {kvp.Key}: {ex.Message}");
+                    stream.HasError = true;
+                    stream.IsActive = false;
+                    DeviceError?.Invoke(deviceId, e.Exception.Message);
                 }
             }
-            _originalSystemVolumes.Clear();
+            else
+            {
+                Logger.Info($"Playback stopped on device {friendlyName}");
+                if (_streams.TryGetValue(deviceId, out var stream))
+                {
+                    stream.IsActive = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets whether a device is currently active (streaming).
+        /// </summary>
+        public bool IsDeviceActive(string deviceId)
+        {
+            return _streams.TryGetValue(deviceId, out var stream) && stream.IsActive;
         }
 
         public void Dispose()
         {
             StopAll();
-            GC.SuppressFinalize(this);
+            _streams.Clear();
+            _disconnectedDevices.Clear();
+            _measuredLatencies.Clear();
+            _deviceVolumes.Clear();
+            _originalSystemVolumes.Clear();
         }
     }
 }

@@ -2,7 +2,8 @@
 bin/
 obj/
 publish/
-
+## brag
+brag-output/
 ## User-specific files
 *.user
 *.suo

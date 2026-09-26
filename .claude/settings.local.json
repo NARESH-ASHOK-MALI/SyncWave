@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build *)",
+      "Bash(dir)",
+      "Bash(timeout 5 dotnet run --no-build)",
+      "Bash(timeout 2 dotnet run --no-build)"
+    ]
+  }
+}

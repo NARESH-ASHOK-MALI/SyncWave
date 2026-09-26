@@ -50,6 +50,7 @@ namespace SyncWave.Views
             {
                 _waveformTimer.Stop();
                 _hotkeyManager?.Dispose();
+                _mainHotkeyManager?.Dispose();
                 (_vm as IDisposable)?.Dispose();
             };
         }
@@ -61,6 +62,7 @@ namespace SyncWave.Views
             var source = PresentationSource.FromVisual(this) as System.Windows.Interop.HwndSource;
             if (source != null)
             {
+                // Flyout hotkey (existing)
                 _hotkeyManager = new SyncWave.Utils.HotkeyManager();
                 _hotkeyManager.HotkeyPressed += (s, ev) =>
                 {
@@ -83,6 +85,47 @@ namespace SyncWave.Views
                             if (!regSuccess)
                             {
                                 _vm.ErrorMessage = $"⚠ Failed to register hotkey '{_vm.HotkeyString}'. Combination may be in use.";
+                            }
+                            else
+                            {
+                                _vm.ErrorMessage = string.Empty;
+                            }
+                        }
+                    };
+                }
+
+                // Main hotkey (new)
+                _mainHotkeyManager = new SyncWave.Utils.MainHotkeyManager();
+                _mainHotkeyManager.HotkeyPressed += (s, ev) =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (this.IsVisible)
+                        {
+                            this.Hide();
+                        }
+                        else
+                        {
+                            this.Show();
+                            this.WindowState = WindowState.Normal;
+                            this.Activate();
+                            this.Focus();
+                            System.Windows.Input.Keyboard.Focus(this);
+                        }
+                    });
+                };
+                bool mainSuccess = _mainHotkeyManager.Register(source);
+
+                if (_vm != null)
+                {
+                    _vm.PropertyChanged += (s, ev) =>
+                    {
+                        if (ev.PropertyName == nameof(MainViewModel.MainHotkeyString) && _mainHotkeyManager != null)
+                        {
+                            bool regSuccess = _mainHotkeyManager.UpdateHotkey(_vm.MainHotkeyString);
+                            if (!regSuccess)
+                            {
+                                _vm.ErrorMessage = $"⚠ Failed to register main hotkey '{_vm.MainHotkeyString}'. Combination may be in use.";
                             }
                             else
                             {
@@ -205,34 +248,27 @@ namespace SyncWave.Views
 
         private FlyoutWindow? _flyout;
         private SyncWave.Utils.HotkeyManager? _hotkeyManager;
+        private SyncWave.Utils.MainHotkeyManager? _mainHotkeyManager;
 
         private void PositionFlyout()
         {
             if (_flyout == null) return;
 
-            if (GetCursorPos(out POINT pt))
-            {
-                var source = PresentationSource.FromVisual(_flyout) ?? PresentationSource.FromVisual(this);
-                var transform = source?.CompositionTarget?.TransformFromDevice;
-                Point logicalPos = transform.HasValue ? transform.Value.Transform(new Point(pt.X, pt.Y)) : new Point(pt.X, pt.Y);
+            // Use the work area (excludes the taskbar) to position the flyout
+            // at the bottom-right corner, just above the taskbar — like native
+            // Windows tray popups.
+            var workArea = SystemParameters.WorkArea;
 
-                double w = _flyout.ActualWidth > 0 ? _flyout.ActualWidth : (double.IsNaN(_flyout.Width) ? 300 : _flyout.Width);
-                double h = _flyout.ActualHeight > 0 ? _flyout.ActualHeight : 200;
+            double w = _flyout.ActualWidth > 0 ? _flyout.ActualWidth : (double.IsNaN(_flyout.Width) ? 300 : _flyout.Width);
+            double h = _flyout.ActualHeight > 0 ? _flyout.ActualHeight : 200;
 
-                double screenWidth = SystemParameters.PrimaryScreenWidth;
-                double screenHeight = SystemParameters.PrimaryScreenHeight;
+            const double margin = 12;
 
-                double left = logicalPos.X - (w / 2);
-                double top = logicalPos.Y - h - 10;
+            double left = workArea.Right - w - margin;
+            double top = workArea.Bottom - h - margin;
 
-                if (left < 0) left = 10;
-                if (left + w > screenWidth) left = screenWidth - w - 10;
-                if (top < 0) top = logicalPos.Y + 10;
-                if (top + h > screenHeight) top = screenHeight - h - 10;
-
-                _flyout.Left = left;
-                _flyout.Top = top;
-            }
+            _flyout.Left = left;
+            _flyout.Top = top;
         }
 
         public void ToggleFlyout()

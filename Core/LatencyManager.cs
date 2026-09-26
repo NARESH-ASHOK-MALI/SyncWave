@@ -8,7 +8,7 @@ namespace SyncWave.Core
 {
     /// <summary>
     /// Manages per-device latency measurement and compensation.
-    /// 
+    ///
     /// Algorithm:
     /// 1. On sync start, each device's stream latency is measured/estimated.
     /// 2. The maximum latency across all devices is determined.
@@ -25,10 +25,11 @@ namespace SyncWave.Core
         private class DelayBuffer
         {
             private byte[] _ringBuffer;
-            private int _writePos;
-            private int _readPos;
-            private int _bufferedCount;
-            private int _delayBytes;
+            private volatile int _writePos;
+            private volatile int _readPos;
+            private volatile int _bufferedCount;
+            private volatile int _delayBytes;
+            private bool _delayInitialized;
             private readonly object _lock = new();
 
             // Re-usable output buffer to avoid per-call allocation
@@ -40,6 +41,7 @@ namespace SyncWave.Core
             public DelayBuffer(int maxBufferSize)
             {
                 _ringBuffer = new byte[maxBufferSize];
+                _delayInitialized = false;
             }
 
             /// <summary>
@@ -51,13 +53,37 @@ namespace SyncWave.Core
                 {
                     if (delayBytes == _delayBytes) return;
 
-                    _delayBytes = Math.Clamp(delayBytes, 0, _ringBuffer.Length / 2);
+                    int newDelay = Math.Clamp(delayBytes, 0, _ringBuffer.Length / 2);
 
-                    // Reset buffer and pre-fill with silence for the delay amount
-                    Array.Clear(_ringBuffer);
-                    _writePos = _delayBytes;
-                    _readPos = 0;
-                    _bufferedCount = _delayBytes;
+                    if (!_delayInitialized)
+                    {
+                        // First initialization: clear buffer and set up initial state
+                        _delayInitialized = true;
+                        _delayBytes = newDelay;
+                        Array.Clear(_ringBuffer);
+                        _writePos = _delayBytes;
+                        _readPos = 0;
+                        _bufferedCount = _delayBytes;
+                    }
+                    else
+                    {
+                        // Adjusting existing delay: modify readPos to change delay without clearing buffer
+                        int oldDelay = _delayBytes;
+                        _delayBytes = newDelay;
+
+                        if (newDelay > oldDelay)
+                        {
+                            // Increasing delay: move readPos backward to increase delay
+                            _readPos = (_readPos - (newDelay - oldDelay) + _ringBuffer.Length) % _ringBuffer.Length;
+                        }
+                        else
+                        {
+                            // Decreasing delay: move readPos forward to decrease delay
+                            _readPos = (_readPos + (oldDelay - newDelay)) % _ringBuffer.Length;
+                        }
+                        // Update bufferedCount to match the new delay amount
+                        _bufferedCount = _delayBytes;
+                    }
                 }
             }
 
@@ -67,12 +93,23 @@ namespace SyncWave.Core
             /// </summary>
             public byte[] Process(byte[] input, int count)
             {
+                // Check delayBytes without lock (volatile read)
+                int delayBytes = _delayBytes;
+                if (delayBytes <= 0)
+                {
+                    // Zero delay — clone the data (must not return same reference
+                    // because caller may apply volume scaling in-place)
+                    EnsureOutputSize(count);
+                    Buffer.BlockCopy(input, 0, _outputBuffer, 0, count);
+                    return _outputBuffer;
+                }
+
                 lock (_lock)
                 {
-                    if (_delayBytes <= 0)
+                    // Double-check in case it changed after we read
+                    delayBytes = _delayBytes;
+                    if (delayBytes <= 0)
                     {
-                        // Zero delay — clone the data (must not return same reference
-                        // because caller may apply volume scaling in-place)
                         EnsureOutputSize(count);
                         Buffer.BlockCopy(input, 0, _outputBuffer, 0, count);
                         return _outputBuffer;
@@ -219,7 +256,7 @@ namespace SyncWave.Core
 
         /// <summary>
         /// Gets the computed latency difference for a device relative to the slowest.
-        /// </summary>
+        /// </>
         public double GetLatencyDiff(string deviceId)
         {
             if (!_buffers.Any() || !_buffers.TryGetValue(deviceId, out var buffer))

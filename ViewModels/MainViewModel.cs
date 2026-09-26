@@ -170,6 +170,20 @@ namespace SyncWave.ViewModels
             }
         }
 
+        private string _mainHotkeyString = MainHotkeyManager.LoadHotkeyConfig();
+        public string MainHotkeyString
+        {
+            get => _mainHotkeyString;
+            set
+            {
+                if (_mainHotkeyString != value)
+                {
+                    _mainHotkeyString = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         // ── Commands ──────────────────────────────────────────────
         public ICommand StartSyncCommand { get; }
         public ICommand StopSyncCommand { get; }
