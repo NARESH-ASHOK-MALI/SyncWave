@@ -1,24 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta name="google-site-verification" content="PIzXwP4RAVPOPZmdiSx0gDPZj6KRrSbttJZS5DpIcZI" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SyncWave — Stream Audio to Multiple Devices Simultaneously</title>
-    <meta name="description" content="Stream system audio to multiple Bluetooth, USB, and wired devices simultaneously with per-device volume & latency control. Free, open-source Windows app.">
-    <meta name="keywords" content="multi-device audio, bluetooth audio splitter, audio sync, Windows audio streaming, WASAPI">
+    <meta name="description"
+        content="Stream system audio to multiple Bluetooth, USB, and wired devices simultaneously with per-device volume & latency control. Free, open-source Windows app.">
+    <meta name="keywords"
+        content="multi-device audio, bluetooth audio splitter, audio sync, Windows audio streaming, WASAPI">
     <meta name="author" content="Naresh Ashok Mali">
     <meta property="og:title" content="SyncWave — One Sound. Many Devices.">
-    <meta property="og:description" content="Stream system audio to multiple Bluetooth, USB, and wired devices simultaneously.">
+    <meta property="og:description"
+        content="Stream system audio to multiple Bluetooth, USB, and wired devices simultaneously.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://naresh-ashok-mali.github.io/SyncWave/">
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=3">
     <link rel="stylesheet" href="carousel.css?v=3">
 </head>
+
 <body>
     <!-- Animated background particles -->
     <canvas id="particles-canvas"></canvas>
@@ -64,35 +70,48 @@
                 <span class="hero-line gradient-text">Many Devices.</span>
             </h1>
             <p class="hero-subtitle">
-                Stream system audio to multiple Bluetooth, USB, and wired devices simultaneously — with real-time per-device volume & latency control.
+                Stream system audio to multiple Bluetooth, USB, and wired devices simultaneously — with real-time
+                per-device volume & latency control.
             </p>
             <div class="hero-actions">
-                <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/download/v2.1.0/SyncWave-v2.1.0-win-x64.zip" class="btn btn-primary" id="hero-download-btn" target="_blank" rel="noopener noreferrer" download>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
+                <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/download/v2.1.0/SyncWave-v2.1.0-win-x64.zip"
+                    class="btn btn-primary" id="hero-download-btn" target="_blank" rel="noopener noreferrer" download>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
                     Download for Windows
                 </a>
-                <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave" class="btn btn-secondary" id="hero-github-btn" target="_blank" rel="noopener noreferrer">
+                <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave" class="btn btn-secondary" id="hero-github-btn"
+                    target="_blank" rel="noopener noreferrer">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        <path
+                            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                     </svg>
                     View on GitHub
                 </a>
             </div>
             <div class="hero-meta">
                 <div class="hero-meta-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 9h18" />
+                    </svg>
                     Windows 10/11
                 </div>
                 <div class="hero-meta-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                    </svg>
                     No Install Required
                 </div>
                 <div class="hero-meta-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
                     MIT License
                 </div>
             </div>
@@ -136,7 +155,7 @@
                 <h2>Syncing made <span class="gradient-text">simple</span></h2>
                 <p>See how easy it is to manage multiple audio devices with SyncWave.</p>
             </div>
-            
+
             <div class="carousel-container" data-animate>
                 <div class="carousel-track">
                     <!-- Slide 1 -->
@@ -172,7 +191,8 @@
                     <!-- Slide 4 -->
                     <div class="carousel-slide">
                         <div class="slide-image-wrapper">
-                            <img src="assets/screenshots/ToggleSecondaryDevicesYouWantToPlay.webp" alt="Toggle devices" loading="lazy">
+                            <img src="assets/screenshots/ToggleSecondaryDevicesYouWantToPlay.webp" alt="Toggle devices"
+                                loading="lazy">
                         </div>
                         <div class="carousel-caption">
                             <h3>3. Toggle & Play</h3>
@@ -186,13 +206,15 @@
                         </div>
                         <div class="carousel-caption">
                             <h3>Stream Everywhere</h3>
-                            <p>Play anything on your PC — it streams to every connected device simultaneously without noticeable delay.</p>
+                            <p>Play anything on your PC — it streams to every connected device simultaneously without
+                                noticeable delay.</p>
                         </div>
                     </div>
                     <!-- Slide 6 -->
                     <div class="carousel-slide">
                         <div class="slide-image-wrapper">
-                            <img src="assets/screenshots/ManageVolumeofsecondaryAudiodeviceFromSystemTray.webp" alt="System Tray Volume" loading="lazy">
+                            <img src="assets/screenshots/ManageVolumeofsecondaryAudiodeviceFromSystemTray.webp"
+                                alt="System Tray Volume" loading="lazy">
                         </div>
                         <div class="carousel-caption">
                             <h3>Tray Volume Control</h3>
@@ -202,7 +224,8 @@
                     <!-- Slide 7 -->
                     <div class="carousel-slide">
                         <div class="slide-image-wrapper">
-                            <img src="assets/screenshots/ExitOrOpenFromSystemTray.webp" alt="System Tray Options" loading="lazy">
+                            <img src="assets/screenshots/ExitOrOpenFromSystemTray.webp" alt="System Tray Options"
+                                loading="lazy">
                         </div>
                         <div class="carousel-caption">
                             <h3>Quick Access</h3>
@@ -222,7 +245,8 @@
                     <!-- Slide 9 -->
                     <div class="carousel-slide">
                         <div class="slide-image-wrapper">
-                            <img src="assets/screenshots/LowCPUConsumptionTaskManager.webp" alt="Low CPU usage" loading="lazy">
+                            <img src="assets/screenshots/LowCPUConsumptionTaskManager.webp" alt="Low CPU usage"
+                                loading="lazy">
                         </div>
                         <div class="carousel-caption">
                             <h3>Ultra-Lightweight</h3>
@@ -230,14 +254,20 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <button class="carousel-nav prev-btn" aria-label="Previous slide">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
                 </button>
                 <button class="carousel-nav next-btn" aria-label="Next slide">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
                 </button>
-                
+
                 <div class="carousel-controls">
                     <div class="carousel-dot active"></div>
                     <div class="carousel-dot"></div>
@@ -267,56 +297,64 @@
                         <div class="feature-icon">🔊</div>
                     </div>
                     <h3>Multi-Device Output</h3>
-                    <p>Stream to unlimited audio devices in parallel. Bluetooth headphones, USB speakers, wired monitors — all at once.</p>
+                    <p>Stream to unlimited audio devices in parallel. Bluetooth headphones, USB speakers, wired monitors
+                        — all at once.</p>
                 </div>
                 <div class="feature-card" data-animate>
                     <div class="feature-icon-wrap">
                         <div class="feature-icon">🎯</div>
                     </div>
                     <h3>Latency Compensation</h3>
-                    <p>Auto-syncs faster devices to the slowest. Fine-tune per-device delay from 0–500ms for perfect lip-sync.</p>
+                    <p>Auto-syncs faster devices to the slowest. Fine-tune per-device delay from 0–500ms for perfect
+                        lip-sync.</p>
                 </div>
                 <div class="feature-card" data-animate>
                     <div class="feature-icon-wrap">
                         <div class="feature-icon">🔈</div>
                     </div>
                     <h3>Real-Time Volume</h3>
-                    <p>Per-device volume control from 0–200% with instant adjustment — no buffer delay, no interruptions.</p>
+                    <p>Per-device volume control from 0–200% with instant adjustment — no buffer delay, no
+                        interruptions.</p>
                 </div>
                 <div class="feature-card" data-animate>
                     <div class="feature-icon-wrap">
                         <div class="feature-icon">📊</div>
                     </div>
                     <h3>Live Monitoring</h3>
-                    <p>Waveform visualization, buffer health bars, and latency readouts — see your audio pipeline in real-time.</p>
+                    <p>Waveform visualization, buffer health bars, and latency readouts — see your audio pipeline in
+                        real-time.</p>
                 </div>
                 <div class="feature-card" data-animate>
                     <div class="feature-icon-wrap">
                         <div class="feature-icon">🔄</div>
                     </div>
                     <h3>Auto-Reconnect</h3>
-                    <p>Bluetooth device disconnected? SyncWave gracefully handles it and polls for reconnection automatically.</p>
+                    <p>Bluetooth device disconnected? SyncWave gracefully handles it and polls for reconnection
+                        automatically.</p>
                 </div>
                 <div class="feature-card" data-animate>
                     <div class="feature-icon-wrap">
                         <div class="feature-icon">🚫</div>
                     </div>
                     <h3>Echo Prevention</h3>
-                    <p>Auto-detects the source device and skips it to prevent the feedback loop that causes audio doubling.</p>
+                    <p>Auto-detects the source device and skips it to prevent the feedback loop that causes audio
+                        doubling.</p>
                 </div>
                 <div class="feature-card" data-animate>
                     <div class="feature-icon-wrap">
                         <div class="feature-icon">💾</div>
                     </div>
                     <h3>Profile Persistence</h3>
-                    <p>Device selection, volume levels, and delay settings are automatically saved and restored between sessions.</p>
+                    <p>Device selection, volume levels, and delay settings are automatically saved and restored between
+                        sessions.</p>
                 </div>
                 <div class="feature-card" data-animate>
                     <div class="feature-icon-wrap">
                         <div class="feature-icon">🎨</div>
                     </div>
                     <h3>Dark Theme UI</h3>
-                    <p>Beautiful modern WPF interface with cyan-purple gradient accents designed for comfortable, extended use.</p>
+                    <p>Beautiful modern WPF interface with cyan-purple gradient accents designed for comfortable,
+                        extended use.</p>
                 </div>
             </div>
         </div>
@@ -335,7 +373,8 @@
                     <div class="step-number">1</div>
                     <div class="step-content">
                         <h3>System Audio Capture</h3>
-                        <p>WASAPI loopback captures all system audio in real-time at native quality — games, music, calls, everything.</p>
+                        <p>WASAPI loopback captures all system audio in real-time at native quality — games, music,
+                            calls, everything.</p>
                     </div>
                 </div>
                 <div class="pipeline-connector">
@@ -346,7 +385,8 @@
                     <div class="step-number">2</div>
                     <div class="step-content">
                         <h3>Latency Measurement</h3>
-                        <p>Each device's hardware latency is measured via <code>AudioClient.StreamLatency</code>. The maximum is used as the sync baseline.</p>
+                        <p>Each device's hardware latency is measured via <code>AudioClient.StreamLatency</code>. The
+                            maximum is used as the sync baseline.</p>
                     </div>
                 </div>
                 <div class="pipeline-connector">
@@ -357,7 +397,8 @@
                     <div class="step-number">3</div>
                     <div class="step-content">
                         <h3>Delay Compensation</h3>
-                        <p>High-performance circular buffers insert calculated delays: <code>maxLatency − deviceLatency + manualOffset</code></p>
+                        <p>High-performance circular buffers insert calculated delays:
+                            <code>maxLatency − deviceLatency + manualOffset</code></p>
                     </div>
                 </div>
                 <div class="pipeline-connector">
@@ -368,7 +409,8 @@
                     <div class="step-number">4</div>
                     <div class="step-content">
                         <h3>Volume Scaling & Output</h3>
-                        <p>Real-time volume scaling (0–200%) applied per-device, then routed through WasapiOut to each physical device.</p>
+                        <p>Real-time volume scaling (0–200%) applied per-device, then routed through WasapiOut to each
+                            physical device.</p>
                     </div>
                 </div>
             </div>
@@ -434,11 +476,14 @@
                     <h2>Ready to sync your audio?</h2>
                     <p>Download SyncWave for free. No installation, no sign-up — just run the exe.</p>
                     <div class="download-actions">
-                        <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/download/v2.1.0/SyncWave-v2.1.0-win-x64.zip" class="btn btn-primary btn-lg" id="footer-download-btn" target="_blank" rel="noopener noreferrer" download>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/>
-                                <line x1="12" y1="15" x2="12" y2="3"/>
+                        <a href="https://github.com/NARESH-ASHOK-MALI/SyncWave/releases/download/v2.1.0/SyncWave-v2.1.0-win-x64.zip"
+                            class="btn btn-primary btn-lg" id="footer-download-btn" target="_blank"
+                            rel="noopener noreferrer" download>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
                             </svg>
                             Download SyncWave v2.1.0
                         </a>
@@ -463,27 +508,30 @@
                 <h2>Help improve <span class="gradient-text">SyncWave</span></h2>
                 <p>Encountered a bug or have a feature request? Let me know below.</p>
             </div>
-            
+
             <div class="feedback-container">
                 <form id="syncwave-feedback-form" class="feedback-form">
                     <!-- Replace YOUR_WEB3FORMS_KEY with an actual Web3Forms access key when ready -->
-                    <input type="hidden" name="access_key" value="bb09276a-5dfd-4898-837f-c5cfc7f62a70">
+                    <input type="hidden" name="access_key" value="cb467c26-8b1b-4e4d-bf2e-4ea9baca11e7">
                     <input type="hidden" name="subject" value="SyncWave Feedback Submission">
-                    
+
                     <div class="form-group">
                         <label for="email">Email Address (Required to send feedback )</label>
-                        <input type="email" id="email" name="email" placeholder="you@example.com" required class="form-input">
+                        <input type="email" id="email" name="email" placeholder="you@example.com" required
+                            class="form-input">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="message">Your Message</label>
-                        <textarea id="message" name="message" rows="5" required placeholder="Describe any issues, bugs, or feature requests you have..." class="form-input"></textarea>
+                        <textarea id="message" name="message" rows="5" required
+                            placeholder="Describe any issues, bugs, or feature requests you have..."
+                            class="form-input"></textarea>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary btn-submit" id="feedback-submit-btn">
                         <span>Send Feedback</span>
                     </button>
-                    
+
                     <div id="form-status" class="form-status"></div>
                 </form>
             </div>
@@ -515,4 +563,5 @@
     <script src="script.js?v=3"></script>
     <script src="carousel.js?v=3"></script>
 </body>
+
 </html>
