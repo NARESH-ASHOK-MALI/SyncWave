@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-2.0.2-blue" alt="Version 2.0.2" />
+  <img src="https://img.shields.io/badge/Version-2.1.0-blue" alt="Version 2.1.0" />
   <img src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet" alt=".NET 8" />
   <img src="https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows" alt="Windows" />
   <img src="https://img.shields.io/badge/Audio-Process%20Loopback-FF6B00" alt="Process Loopback Capture" />

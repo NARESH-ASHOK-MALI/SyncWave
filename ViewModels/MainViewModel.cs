@@ -189,7 +189,7 @@ namespace SyncWave.ViewModels
         public ICommand StopSyncCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
 
-        public string AppVersion => $"v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "2.0.2"}";
+        public string AppVersion => $"v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "2.1.0"}";
 
         // ── Constructor ───────────────────────────────────────────
         public MainViewModel()
